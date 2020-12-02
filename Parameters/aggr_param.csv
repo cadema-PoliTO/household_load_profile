@@ -1,0 +1,5 @@
+'Parameter name';'Unit of measure';'Value'
+'dt_aggr';'min';60
+'quantile_min';'%';15
+'quantile_med';'%';50
+'quantile_max';'%';85

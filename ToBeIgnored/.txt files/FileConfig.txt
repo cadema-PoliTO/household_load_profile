@@ -1,0 +1,44 @@
+@Ndwelling 
+% nhouse fam sup
+100 2.70 70
+50 3.70 107
+
+@appliance 
+
+% difN difC difS durata(h/d) workgraph enclass w.d. w.e. season Pmean   MultiN MultiC MultiS
+	1 	1 	1 		50 			0 		 1 		0 	 1 		0  	  0       0		0 		0  			% Aspirapolvere durata: > 12 =cicli/anno
+  0.2  0.2  0.25    4           0        1		0	 0		1	  0 	  0		0		0 			% Condizionatore
+    1   1   1       104         0        1      0    0      1     0		  0		0		0	 		% Forno elettrico
+  0.75 0.7  0.60    0.25		0        0      0    0      1     1100 	  0		0		0      		% Microonde
+	1	1	1		0			0		 1      0    0      1     0		  0		0		0	 		% Frigocongelatore
+  0.29 0.27 0.25    0			0   	 1      0    0      0     0 	  0		0		0	 		% Freezer
+    1   1   1       104 		1		 0		1    1      1	  0		  0		0		0	 		% Lavabiancheria
+  0.47 0.47 0.25    104		    1		 0		1	 1		1 	  0		  0		0		0	 		% Lavastoviglie
+  0.1  0.1  0.1     104         1		 0      1	 1      1	  0		  0		0		0	 		% Asciugatrice
+  0.22 0.3  0.38    2			0		 0		0	 0      1     1350    0		0		0    		% Boiler Elettrico
+  0.59 0.58 0.5		1			0		 1		1    1      0	  50	  0		0		0	 		% Amplificatore stereo HiFi
+    1   1   1		4	        0	     1		1    1		0	  0       1.79  1.93    1.73  		% TV
+  0.48 0.49 0.41	1.5			0		 0		1    1      0	  200	  1.15  1.13    1.1	 		% Computer Desktop
+  0.2  0.2  0.2     1.5			0		 0 		1    1      0     90 	  0		0		0		    % Laptop
+    
+  
+
+  
+  % Illuminazione  
+  
+
+id   % identificativo della matrice appliances
+location nord/sud
+enclass A++/A+/A/B/C/others
+Diffusion 	d
+Timework 	tday
+Pmean     	p
+Workgraph
+Season profile
+
+@timeline
+
+anno,mese,giorno set,giorno anno,ora,q
+
+
+

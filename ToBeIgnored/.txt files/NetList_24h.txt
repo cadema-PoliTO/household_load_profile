@@ -1,0 +1,29 @@
+@Scheduling
+24 1 1000 
+
+@Dispatchable Electric Input
+0 1 Grid ReteNew
+
+@Non-Dispatchable Electric Input
+0 1 PV PV_6kW G irradiation24h 
+
+%@Dispatchable Thermal Input
+%0 1 Stt Stt_2MWh
+%0 1 Boiler BoilerRTQ-4000
+
+%@Non-Dispatchable Thermal Input
+%0 1 SH SH_300 G irradiation
+
+%@Thermal Output
+%0 1 Ut loadUt
+
+@Electric Output
+0 1 Ue loadUe24h
+
+@Energy Price
+0 1 Cs priceCs24h
+0 1 Cp priceCp24h
+
+@Solver
+Gurobi 0
+

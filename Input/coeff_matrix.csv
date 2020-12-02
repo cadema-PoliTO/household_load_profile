@@ -1,0 +1,18 @@
+ID Number;Name;Nickname;w;s;ap
+0;Air_conditioner;ac;0;1.2;0
+1;Lighting;lux;1.2;1.2;1.2
+2;Fridge;frg;1.2;1.4;1.2
+3;Freezer;frz;1.2;1.3;1.2
+4;Electric_oven;elo;1.3;1.2;1.3
+5;Microwave_oven;mwo;1.2;1.2;1.2
+6;Electric_boiler;bo;1.2;0.7;1.2
+7;Iron;ir;1.2;1.2;1.2
+8;Vacuum_cleaner;vc;1.2;1.2;1.2
+9;Washing_machine;wm;1.2;1.5;1.2
+10;Dish_washer;dw;1.2;1.2;1.2
+11;Tumble_drier;td;1.2;0;1.2
+12;PC;pc;1.2;1.2;1.2
+13;TV;tv;1.2;1.2;1.2
+14;Laptop;lap;1.2;1.2;1.2
+15;Hifi_stereo;hs;1.2;1.2;1.2
+16;DVD_reader;vr;1.2;1.2;1.2
