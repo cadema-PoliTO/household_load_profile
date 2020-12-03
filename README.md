@@ -1,11 +1,11 @@
 # Aggregated_Household_Load_Profiler
 
-## Generation of load profiles from electric appliances for an aggregate of household
+## Generation of the load profiles from electric appliances for an aggregate of households
 
 ### Requirements
 
 Codes included in this repository are written in Python 3, that is the only real requirement. They have been tested with Python 3.8 but also earlier version of Python 3 should work.
-Python packages needed for running the methods are: numpy, scipy.interpolate, matplotlib.pyplot, math, random. All the other self-created methods used are present in this repository.
+Python packages needed for running the methods are: os, numpy, scipy.interpolate, matplotlib.pyplot, math, random. All the other self-created methods used are present in this repository.
 
 ### General description
 
