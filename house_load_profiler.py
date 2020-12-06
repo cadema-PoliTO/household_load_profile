@@ -21,6 +21,7 @@ from load_profiler import load_profiler as lp
 # load profile for the household during one day (1440 min), with a resolution
 # of 1 minute.
 
+
 ###############################################################################
 
 ########## Input parameters
@@ -47,13 +48,9 @@ def house_load_profiler(apps_availability,day,season):
     ''' The method returns a load profile for a given household in a total simulation time of 1440 min, with a timestep of 1 min.
     
     Inputs:
-        Power_max - maximum available power from the grid (W)
+        apps_availability - 1d-array in which the availability of each appliance for the household is stored (1 if present, 0 if not)
         day - type of day (weekday:'wd'|weekend:'we')
         season - season (summer:'s',winter:'w',autumn or spring:'ap')
-        en_class - energetic class of the appliance (from 'A+++' to 'D')
-        toll (optional) - tollerance on total time in which the appliance is on (%); default value: 15%
-        devsta (optional) - standard deviation on total time in which the appliance is on (min); default value: 2 min
-        ftg (optional) - footage of the households (m2), since "continuous" appliances' consumptions are normaized to 100 m2
         
     Outputs:
         house_load_profile - load profile for the household (W)

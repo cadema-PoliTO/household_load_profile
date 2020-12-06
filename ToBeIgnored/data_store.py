@@ -4,8 +4,8 @@ Created on Tue Oct 27 15:46:24 2020
 
 @author: giamm
 """
-
 import os
+from pathlib import Path
 import numpy as np
 from scipy.interpolate import interp1d
 import csv
@@ -23,13 +23,10 @@ from profile_interpolation import interp_profile
 
 # The base path is saved in the variable basepath, it is used to move among
 # directories to find the files that need to be read.
-basepath = os.path.dirname(os.path.abspath(__file__))
+basepath = Path(__file__).parent.parent
+basedir = Path(__file__).parent #Directory where the input files for this script are to be found
+dirname = 'Input' #Directory where to save the files created in this script
 
-basedir = basepath[basepath.rfind('\\'):] + '\\' #DIrectory where to take the files from
-
-basepath = basepath[:basepath.rfind('\\')] #Path where the main is
-
-dirname = '\\Input\\' #Directory where to save the files
 
 ########## Washing machine (wm) and tumble-drier (td): duty-cycle (dc)
 
@@ -40,33 +37,33 @@ power = np.array([0,200,200,2000,2000,2000,400,400,400,600,0,0,300,300,0,400,400
 
 f = interp1d(time,power, kind='linear')
 
-time_dc = np.linspace(0,time[-1],int(time[-1]/dt+1));
+time_dc = np.linspace(0,time[-1],int(time[-1]/dt+1))
 duty_cycle = f(time_dc)
 
-# dirname = '\\Input\\'
+# dirname = 'Input' #Uncomment this in case you want to save the file in a different folder
 filename = 'dutycycle_wm.csv'
-fname = basepath + dirname + filename
+fname = Path(basepath / dirname / filename)
 
-with open(fname, mode='w', newline='') as dcwm_file:
-    dcwm_writer = csv.writer(dcwm_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+with open(fname, mode='w', newline='') as csv_file:
+    csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
 
-    dcwm_writer.writerow(['Time [min]', 'Power [W]'])
+    csv_writer.writerow(['Time [min]', 'Power [W]'])
     
     for ii in range(np.size(time_dc)):
-        dcwm_writer.writerow([time_dc[ii],duty_cycle[ii]])
+        csv_writer.writerow([time_dc[ii],duty_cycle[ii]])
         
-# dirname = '\\Input\\'
+# dirname = 'Input' #Uncomment this in case you want to save the file in a different folder
 filename = 'dutycycle_td.csv'
-fname = basepath + dirname + filename
+fname = Path(basepath / dirname / filename)
            
-with open(fname, mode='w', newline='') as dctd_file:
-    dctd_writer = csv.writer(dctd_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+with open(fname, mode='w', newline='') as csv_file:
+    csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
 
-    dctd_writer.writerow(['Time [min]', 'Power [W]'])
+    csv_writer.writerow(['Time [min]', 'Power [W]'])
     
     for ii in range(np.size(time_dc)):
-        dctd_writer.writerow([time_dc[ii],duty_cycle[ii]])
-        
+        csv_writer.writerow([time_dc[ii],duty_cycle[ii]])
+      
 
 ########## Dish-washer (dw): duty-cycle (dc)
 
@@ -80,17 +77,17 @@ f = interp1d(time,power, kind='linear')
 time_dc = np.linspace(0,time[-1],int(time[-1]/dt+1));
 duty_cycle = f(time_dc)
 
-# dirname = '\\Input\\'
+# dirname = 'Input' #Uncomment this in case you want to save the file in a different folder
 filename = 'dutycycle_dw.csv'
-fname = basepath + dirname + filename
+fname = Path(basepath / dirname / filename)
 
-with open(fname, mode='w', newline='') as dcdw_file:
-    dcdw_writer = csv.writer(dcdw_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+with open(fname, mode='w', newline='') as csv_file:
+    csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
 
-    dcdw_writer.writerow(['Time [min]', 'Power [W]'])
+    csv_writer.writerow(['Time [min]', 'Power [W]'])
     
     for ii in range(np.size(time_dc)):
-        dcdw_writer.writerow([time_dc[ii],duty_cycle[ii]])
+        csv_writer.writerow([time_dc[ii],duty_cycle[ii]])
 
 
 ########## Air-conditioner (ac): load profile (lp)
@@ -123,17 +120,17 @@ ACmean_lp = (ACjuly_lp+ACsept_lp)/2
 ACmean_lp = ACmean_lp/(np.trapz(ACmean_lp,time_lp))
 ACmean_lp = ACmean_lp*(3.08+6.57)*1000/2
 
-# dirname = '\\Input\\'
+# dirname = 'Input' #Uncomment this in case you want to save the file in a different folder
 filename = 'loadprof_ac_wde_sawp.csv'
-fname = basepath + dirname + filename
+fname = Path(basepath / dirname / filename)
 
-with open(fname, mode='w', newline='') as lpac_file:
-    lpac_writer = csv.writer(lpac_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+with open(fname, mode='w', newline='') as csv_file:
+    csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
 
-    lpac_writer.writerow(['Time [h]', 'Power [W]'])
+    csv_writer.writerow(['Time [h]', 'Power [W]'])
     
     for ii in range(np.size(time_lp)):
-        lpac_writer.writerow([time_lp[ii],ACmean_lp[ii]])
+        csv_writer.writerow([time_lp[ii],ACmean_lp[ii]])
 
     
 ######### Electric (elo) and microwave (mwo) ovens: frequency density (fq) profiles
@@ -151,30 +148,30 @@ time_fq = np.arange(0,time,dt)/60 #(h)
 
 power_fq = interp_profile(oven_time,oven_power,time_fq)
 
-# dirname = '\\Input\\'
+# dirname = 'Input' #Uncomment this in case you want to save the file in a different folder
 filename = 'freqdens_elo_wd_sawp.csv'
-fname = basepath + dirname + filename
+fname = Path(basepath / dirname / filename)
 
-with open(fname, mode='w', newline='') as fqelo_file:
-    fqelo_writer = csv.writer(fqelo_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+with open(fname, mode='w', newline='') as csv_file:
+    csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
 
-    fqelo_writer.writerow(['Time [h]', 'Power [W]'])
+    csv_writer.writerow(['Time [h]', 'Power [W]'])
     
     for ii in range(np.size(time_fq)):
-        fqelo_writer.writerow([time_fq[ii],power_fq[ii]])
+        csv_writer.writerow([time_fq[ii],power_fq[ii]])
  
         
-# dirname = '\\Input\\'
+# dirname = 'Input' #Uncomment this in case you want to save the file in a different folder
 filename = 'freqdens_mwo_wd_sawp.csv'
-fname = basepath + dirname + filename
+fname = Path(basepath / dirname / filename)
 
-with open(fname, mode='w', newline='') as fqmwo_file:
-    fqmwo_writer = csv.writer(fqmwo_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+with open(fname, mode='w', newline='') as csv_file:
+    csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
 
-    fqmwo_writer.writerow(['Time [h]', 'Power [W]'])
+    csv_writer.writerow(['Time [h]', 'Power [W]'])
     
     for ii in range(np.size(time_fq)):
-        fqmwo_writer.writerow([time_fq[ii],power_fq[ii]])
+        csv_writer.writerow([time_fq[ii],power_fq[ii]])
 
 # Week-end (we) profile
 
@@ -185,30 +182,30 @@ time_fq = np.arange(0,time,dt)/60 #(h)
 
 power_fq = interp_profile(oven_time,oven_power,time_fq)
 
-# dirname = '\\Input\\'
+# dirname = 'Input' #Uncomment this in case you want to save the file in a different folder
 filename = 'freqdens_elo_we_sawp.csv'
-fname = basepath + dirname + filename
+fname = Path(basepath / dirname / filename)
 
-with open(fname, mode='w', newline='') as fqelo_file:
-    fqelo_writer = csv.writer(fqelo_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+with open(fname, mode='w', newline='') as csv_file:
+    csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
 
-    fqelo_writer.writerow(['Time [h]', 'Power [W]'])
+    csv_writer.writerow(['Time [h]', 'Power [W]'])
     
     for ii in range(np.size(time_fq)):
-        fqelo_writer.writerow([time_fq[ii],power_fq[ii]])
+        csv_writer.writerow([time_fq[ii],power_fq[ii]])
  
         
-# dirname = '\\Input\\'
+# dirname = 'Input' #Uncomment this in case you want to save the file in a different folder
 filename = 'freqdens_mwo_we_sawp.csv'
-fname = basepath + dirname + filename
+fname = Path(basepath / dirname / filename)
 
-with open(fname, mode='w', newline='') as fqmwo_file:
-    fqmwo_writer = csv.writer(fqmwo_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+with open(fname, mode='w', newline='') as csv_file:
+    csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
 
-    fqmwo_writer.writerow(['Time [h]', 'Power [W]'])
+    csv_writer.writerow(['Time [h]', 'Power [W]'])
     
     for ii in range(np.size(time_fq)):
-        fqmwo_writer.writerow([time_fq[ii],power_fq[ii]])
+        csv_writer.writerow([time_fq[ii],power_fq[ii]])
         
 
 ########## Appliances: frequency density profiles or load profile
@@ -234,6 +231,7 @@ app_dict = dict({
     16:('lighting','lux',0,2)
     })
 
+# dirname = 'Input' #Uncomment this in case you want to save the file in a different folder
 fname_type = 'freqdens'
 
 for key in app_dict:
@@ -265,7 +263,7 @@ for key in app_dict:
         # Reading the .dat file and storing its values
     
         filename= fname_type + '_' + fname_el + '_' + fname_week + '_' + fname_season + '.dat'
-        fname = basepath + basedir + filename
+        fname = Path(basepath / basedir / filename)
         
         with open(fname) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter='\t')
@@ -287,7 +285,7 @@ for key in app_dict:
         # Writing the .csv file
         
         filename = fname_type + '_' + val[1] + '_' + 'wde' + '_' + 'sawp' + '.csv'
-        fname = basepath + dirname + filename
+        fname = Path(basepath / dirname / filename)
         
         with open(fname, mode='w', newline='') as csv_file:
             csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
@@ -307,7 +305,7 @@ for key in app_dict:
         
         # Reading the .dat file and storing its values
         filename= fname_type + '_' + fname_el + '_' + fname_week + '_' + fname_season + '.dat'
-        fname = basepath + basedir + filename
+        fname = Path(basepath / basedir / filename)
 
         with open(fname) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter='\t')
@@ -329,7 +327,7 @@ for key in app_dict:
         # Writing the .csv file
         
         filename = fname_type + '_' + val[1] + '_' + 'wd' + '_' + 'sawp' + '.csv'
-        fname = basepath + dirname + filename
+        fname = Path(basepath / dirname / filename)
         
         with open(fname, mode='w', newline='') as csv_file:
             csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
@@ -347,7 +345,7 @@ for key in app_dict:
         
         # Reading the .dat file and storing its values
         filename= fname_type + '_' + fname_el + '_' + fname_week + '_' + fname_season + '.dat'
-        fname = basepath + basedir + filename
+        fname = Path(basepath / basedir / filename)
         
         with open(fname) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter='\t')
@@ -369,7 +367,7 @@ for key in app_dict:
         # Writing the .csv file
         
         filename = fname_type + '_' + val[1] + '_' + 'we' + '_' + 'sawp' + '.csv'
-        fname = basepath + dirname + filename
+        fname = Path(basepath / dirname / filename)
         with open(fname, mode='w', newline='') as csv_file:
             csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
             csv_writer.writerow(['Time [W]', 'Power [W]'])
@@ -394,10 +392,11 @@ for tup in val_list:
 fname_type = 'loadprof'
 fname_el = app_dict[key][1]
 fname_week = 'all'
+# Dirname = 'Input' #Uncomment this in case you want to save the file in a different folder
 
 aux_dict = dict({0:('su','s'),1:('wi','w'),2:('sa','ap')})
 
-for jj in range(3):
+for jj in range(len(aux_dict)):
     
     fname_season = aux_dict[jj][0]
     
@@ -406,7 +405,7 @@ for jj in range(3):
         
     # Reading the .dat file and storing its values
     filename= fname_type + '_' + fname_el + '_' + fname_week + '_' + fname_season + '.dat'
-    fname = basepath + basedir + filename
+    fname = Path(basepath / basedir / filename)
     
     with open(fname) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter='\t')
@@ -427,7 +426,7 @@ for jj in range(3):
     # Writing the .csv file
         
     filename = fname_type + '_' + val[1] + '_' + 'wde' + '_' + aux_dict[jj][1] + '.csv'
-    fname = basepath + dirname + filename
+    fname = Path(basepath / dirname / filename)
     
     with open(fname, mode='w', newline='') as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)

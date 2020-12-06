@@ -12,7 +12,9 @@ import numpy as np
 
 # This script is used to create a profile, interpolating a set of data
 
-        
+
+##############################################################################
+    
 def interp_profile(time,profile,time_intp):
       
     '''The returns a linear-interpolated profile (with periodic behavior).
@@ -36,7 +38,6 @@ def interp_profile(time,profile,time_intp):
         
     # Saturation to 0 for negative values (since negative powers don't have physical meaning)
     profile_intp[profile_intp < 0] = 0
-    
     
     return(profile_intp)
 

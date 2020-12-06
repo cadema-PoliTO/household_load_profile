@@ -10,7 +10,6 @@ import numpy as np
 import random
 # import math
 import csv
-import os
 from pathlib import Path
 
 import datareader
@@ -32,11 +31,16 @@ from load_profile_aggregator import aggregator as agr
 # This is done for each season, both for weekdays and weekend days. The energy 
 # consumption from each appliance during the whole year is also evaluated.
 
-basepath = os.path.dirname(os.path.abspath(__file__))
 
-# An \Output folder is created in order to store the results as .csv files
-dirname = '\\Output\\'
-try: os.makedirs(basepath + dirname)
+###############################################################################
+
+# The basepath of the file is stored in a variable 
+basepath = Path(__file__).parent
+
+# An /Output folder is created in order to store the results as .csv files
+dirname = 'Output'
+
+try: Path.mkdir(basepath / dirname)
 except Exception: pass 
   
 ########## Parameters
@@ -211,6 +215,7 @@ nmax = int(np.round(n_hh*quantile_max/100))
 for season in seasons:
 
     season_nickname = seasons[season][1]
+
     # The energy consumption from all the apps is stored for each season.
     energy_season = np.zeros((len(apps_ID),n_hh))
     
@@ -245,11 +250,10 @@ for season in seasons:
         quantile_lp_max = sorted_lp[:,nmax]
         
         # Saving load profiles and quantile in a file, for each day for each season
-        
         filename = 'aggr_lp' + '_' + season + '_' + day_nickname + '_' + str(n_hh) + '_' + en_class + '_' + location + '.csv'
-        fname = basepath + dirname + filename
+        fpath = basepath / dirname 
         
-        with open(fname, mode='w', newline='') as csv_file:
+        with open(fpath / filename, mode='w', newline='') as csv_file:
             csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
             csv_writer.writerow(['Time [min]','Load profile [W]','Load min [W]','Load med [W]','Load max [W]'])
     
@@ -262,9 +266,9 @@ for season in seasons:
         
     # Saving the energy consumed by the appliances in each household, for each season
     filename = 'energy' + '_' + season + '_' + str(n_hh) + '_' + en_class + '_' + location + '.csv'
-    fname = basepath + dirname + filename
+    fpath = basepath / dirname 
     
-    with open(fname, mode='w', newline='') as csv_file:
+    with open(fpath / filename, mode='w', newline='') as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
         csv_writer.writerow(['App_name','App_nickname']+list(range(0,n_hh)))
     

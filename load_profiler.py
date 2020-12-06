@@ -22,6 +22,7 @@ from profile_interpolation import interp_profile #routine created to interpolate
 # yearly energy consumption) returns the load profile for the appliance during 
 # one day (1440 min), with a resolution of 1 minute.
 
+
 ###############################################################################
 
 ######### Input parameters
@@ -50,16 +51,9 @@ def load_profiler(app,day,season):
         app - name of the appliance(str)
         day - type of day (weekday:'wd'|weekend:'we')
         season - season (summer:'s',winter:'w',autumn or spring:'ap')
-        en_class - energetic class of the appliance (from 'A+++' to 'D')
-        dt (optional) - timestep of the simulation (min); default value: 1min
-        toll (optional) - tollerance on total time in which the appliance is on (%); default value: 15%
-        devsta (optional) - standard deviation on total time in which the appliance is on (min); default value: 2 min
-        ftg (optional) - footage of the households (m2), since "continuous" appliances' consumptions are normaized to 100 m2
-        
+    
     Outputs:
-        time_lp - time vector of the simulation period (h)
-        load_profile - load profile for the appliance (W)
-        
+        load_profile - load profile for the appliance (W) 
     '''
     
     dt = 1 #timestep of the simulation (min)
@@ -258,9 +252,9 @@ def load_profiler(app,day,season):
     
     for ii in range(0, len(time_dc)):
          
-        tt=instant_index+ii;   
+        tt=instant_index+ii
         if (tt>=len(time_sim)):
-                tt=tt-len(time_sim);
+                tt=tt-len(time_sim)
                
         load_profile[tt]=duty_cycle[ii]
     

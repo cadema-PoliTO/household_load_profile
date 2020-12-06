@@ -5,7 +5,7 @@ Created on Tue Nov 10 16:09:48 2020
 @author: giamm
 """
 
-import os
+from pathlib import Path
 import csv
 import datareader
 
@@ -15,21 +15,23 @@ import datareader
 # This file is used to let the user enter the input parameters from keyboard.
 # If a value is not given by the user, a default value is assigned.
 
+
 ##############################################################################
 
 # The base path is saved in the variable basepath, it is used to move among
 # directories to find the files that need to be read.
-basepath = os.path.dirname(os.path.abspath(__file__))
+basepath = Path(__file__).parent
 
-# A \Parameters folder is created in order to store the parameters as .csv files
-dirname = '\\Parameters\\'
-try: os.makedirs(basepath + dirname)
+# A /Parameters folder is created in order to store the parameters as .csv files
+dirname = 'Parameters'
+
+try: Path.mkdir(basepath / dirname)
 except Exception: pass 
+
 
 ########## Parameters
 
 # Simulation parameters that can be changed
-
 n_hh = 100 #number of households (-)
 n_people_avg = 2.7 #average number of members for each household (-)
 ftg_avg = 100  #average footage of each household (m2)
@@ -45,16 +47,15 @@ toll = 15 #tollerance on total time in which the appliance is on (%); default va
 devsta = 2 #standard deviation on total time in which the appliance is on (min); default value: 2 min
 
 # Aggregation parameters that can be changed
-
 dt_aggr = 15 #aggregated data timestep (min) 1 | 5 | 10 | 15 | 10 | 30 | 45 | 60
 quantile_min, quantile_med, quantile_max = 15,50,85 #quantils for the evaluation of minimum, medium and maximux power demands for the load profiles
 quantile_curr = [quantile_min, quantile_med, quantile_max]
 
 # Plotting parameters that can be changed
-
 time_scale = 'min' #time-scale for plotting: 'min' | 'h' 
 power_scale = 'W' #power_scale for plotting: 'W' | 'kW'
 energy_scale = 'Wh' #energy_scale for plotting: 'Wh' | 'kWh' | 'MWh' 
+
 
 ########### Parameters update 
 
@@ -86,7 +87,7 @@ def sim_param():
     Press 'enter' to assign them their default values.\n'''
     print(message)
 
-    
+
     message = '\nPlease, enter the total number of households to be considered - currently: %d\n' %(n_hh)
     n_hh_inp = input(message) #number of households (-)
     
@@ -206,8 +207,8 @@ def sim_param():
     
      
     filename = 'sim_param.csv'
-    fname = basepath + dirname + filename
-    with open(fname , mode='w', newline='') as csv_file:
+    fpath = basepath / dirname 
+    with open(fpath / filename , mode='w', newline='') as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
 
         csv_writer.writerow(['Parameter name', 'Unit of measure' , 'Value'])
@@ -287,8 +288,8 @@ def aggr_param():
     aggr_param_dict['quantile_max'] = ('%' , quantile_max)
     
     filename = 'aggr_param.csv'
-    fname = basepath + dirname + filename
-    with open(fname , mode='w', newline='') as csv_file:
+    fpath = basepath / dirname 
+    with open(fpath / filename, mode='w', newline='') as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
 
         csv_writer.writerow(['Parameter name', 'Unit of measure' , 'Value'])
@@ -359,8 +360,8 @@ def plot_param():
     plot_param_dict['energy_scale'] = ('/' , energy_scale_inp)
     
     filename = 'plot_param.csv'
-    fname = basepath + dirname + filename
-    with open(fname , mode='w', newline='') as csv_file:
+    fpath = basepath / dirname 
+    with open(fpath / filename , mode='w', newline='') as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
 
         csv_writer.writerow(['Parameter name', 'Unit of measure' , 'Value'])

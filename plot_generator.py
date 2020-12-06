@@ -5,7 +5,7 @@ Created on Mon Nov  9 15:35:26 2020
 @author: giamm
 """
 
-import os
+from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import random
@@ -15,11 +15,22 @@ import datareader
 
 ###############################################################################
 
-basepath = os.path.dirname(os.path.abspath(__file__))
 
-# An \Output\Figures folder is created in order to store the graphs as .png files
-dirname = '\\Output\\Figures\\'
-try: os.makedirs(basepath + dirname)
+# This script is used to plot the results from the simulation
+
+
+###############################################################################
+
+# The basepath of the file is stored in a variable 
+basepath = Path(__file__).parent
+
+# An /Output/Figures folder is created in order to store the graphs as .png files
+ 
+
+dirname = 'Output'
+subdirname = 'Figures'
+
+try: Path.mkdir(basepath / dirname / subdirname)
 except Exception: pass 
 
 
@@ -211,8 +222,8 @@ for season in seasons:
     fig1.subplots_adjust(wspace=0.2)
     
     filename = 'aggr_loadprof_' + season + '_' + str(n_hh) + '_' + en_class + '_' + location + '.png'
-    fname = basepath + dirname + filename
-    fig1.savefig(fname)
+    fpath = basepath / dirname / subdirname
+    fig1.savefig(fpath / filename)
     
     
 ########## Plotting the load profile quantile
@@ -281,8 +292,8 @@ for season in seasons:
         axi.legend(loc='upper left',fontsize=fontsize_legend, ncol = 2)
     
     filename = 'avg_quant_loadprof_' + season + '_' + str(n_hh) + '_' + en_class + '_' + location + '.png'
-    fname = basepath + dirname + filename
-    fig2.savefig(fname)
+    fname = basepath / dirname / subdirname
+    fig2.savefig(fpath / filename)
     
     
 ########## Total energy consumption from classes of appliances for season
@@ -393,8 +404,8 @@ ax.text(0.02, 0.9, text_toadd.rstrip(), fontsize=fontsize_text, ha='left', va='t
 
 
 filename = 'total_en_classes__' + season + '_' + str(n_hh) + '_' + en_class + '_' + location + '.png'
-fname = basepath + dirname + filename
-fig3.savefig(fname)
+fpath = basepath / dirname / subdirname
+fig3.savefig(fpath / filename)
 
   
 ##### The percentage of total energy consumption from the classes of appliances is 
@@ -460,8 +471,8 @@ for season in seasons:
     subpl_col += 1
  
 filename = 'perc_en_classes__' + season + '_' + str(n_hh) + '_' + en_class + '_' + location + '.png'
-fname = basepath + dirname + filename
-fig4.savefig(fname)
+fpath = basepath / dirname / subdirname
+fig4.savefig(fpath / filename)
          
     
 ########## Total and average yearly energy consumption from appliances
@@ -541,8 +552,8 @@ ax_tw.tick_params(axis='y', colors='r',labelsize=fontsize_labels)
 
 
 filename = 'total_en_apps__' + season + '_' + str(n_hh) + '_' + en_class + '_' + location + '.png'
-fname = basepath + dirname + filename
-fig5.savefig(fname)
+fpath = basepath / dirname / subdirname
+fig5.savefig(fpath / filename)
 
    
 ##### Rather than analyzing the results in absolute terms, they are now analyzed
@@ -603,6 +614,6 @@ for index, value in enumerate(heights):
 
 
 filename = 'avg_en_apps__' + season + '_' + str(n_hh) + '_' + en_class + '_' + location + '.png'
-fname = basepath + dirname + filename
-fig6.savefig(fname)
+fpath = basepath / dirname / subdirname
+fig6.savefig(fpath / filename)
 

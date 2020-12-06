@@ -5,14 +5,13 @@ Created on Mon Oct 26 10:45:12 2020
 @author: giamm
 """
 
-import os
 from pathlib import Path
 import numpy as np
 import csv
 import math
 
-
 ##############################################################################
+
 
 # This scripted is used to create methods that properly read files
 
@@ -21,7 +20,10 @@ import math
 
 # The base path is saved in the variable basepath, it is used to move among
 # directories to find the files that need to be read.
-basepath = os.path.dirname(os.path.abspath(__file__))
+basepath = Path(__file__).parent
+
+
+##############################################################################
 
 def read_param(filename,delimit,dirname):
     
@@ -32,25 +34,25 @@ def read_param(filename,delimit,dirname):
     Inputs:
         filname - string containing the name of the file (extension of the file: .dat)
         delimit - string containing the delimiting element
+        dirname - name of the folder where to find the file to be opened and read
         
     Outputs:
-        data - 2d-array containing the values in the file'
+        varname_list - list of the names of the variebles that are in the file
+        varval_list - list of the values of the variables that are in the file
     '''
     
     dirname = dirname.strip()
-    if not dirname.startswith('\\'): dirname = '\\' + dirname
-    if not dirname.endswith('\\'): dirname = dirname + '\\'
 
     filename = filename.strip()
     if not filename.endswith('.csv'): filename = filename + '.csv'
     
-    fname = basepath + dirname + filename 
+    fpath = basepath / dirname 
     
     varname_list = []
     varval_list = []
     
     try:
-        with open(fname, mode='r') as csv_file:
+        with open(fpath / filename, mode='r') as csv_file:
             csv_reader = csv.reader(csv_file,delimiter=delimit,quotechar="'")
             next(csv_reader, None) 
             
@@ -70,12 +72,8 @@ def read_param(filename,delimit,dirname):
      
     return(varname_list,varval_list)
 
-##############################################################################
 
-# if True:
-#     filename = 'loadprof_lux_wde_w'
-#     delimit = ';'
-#     dirname = 'Input'
+##############################################################################
     
 def read_general(filename,delimit,dirname):
     
@@ -85,24 +83,23 @@ def read_general(filename,delimit,dirname):
     Inputs:
         filname - string containing the name of the file (extension of the file: .dat)
         delimit - string containing the delimiting element
+        dirname - name of the folder where to find the file to be opened and read
         
     Outputs:
         data - 2d-array containing the values in the file'
     '''
     
     dirname = dirname.strip()
-    if not dirname.startswith('\\'): dirname = '\\' + dirname
-    if not dirname.endswith('\\'): dirname = dirname + '\\'
 
     filename = filename.strip()
     if not filename.endswith('.csv'): filename = filename + '.csv'
     
-    fname = basepath + dirname + filename 
+    fpath = basepath / dirname 
     
     data_list=[]
     
     try:
-        with open(fname, mode='r') as csv_file:
+        with open(fpath / filename, mode='r') as csv_file:
             csv_reader = csv.reader(csv_file,delimiter=delimit)
             next(csv_reader, None) 
             for row in csv_reader:
@@ -117,6 +114,7 @@ def read_general(filename,delimit,dirname):
     data = np.array(data_list,dtype='float')
     return(data)
 
+
 ##############################################################################
 
 def read_appliances(filename,delimit,dirname):
@@ -126,6 +124,7 @@ def read_appliances(filename,delimit,dirname):
     Inputs:
         filname - string containing the name of the file (extension of the file: .dat)
         delimit - string containing the delimiting element
+        dirname - name of the folder where to find the file to be opened and read
         
     Outputs:
         app - 2D-array containing, for each appliance, its attributes' values
@@ -134,24 +133,22 @@ def read_appliances(filename,delimit,dirname):
     '''
     
     dirname = dirname.strip()
-    if not dirname.startswith('\\'): dirname = '\\' + dirname
-    if not dirname.endswith('\\'): dirname = dirname + '\\'
 
     filename = filename.strip()
     if not filename.endswith('.csv'): filename = filename + '.csv'
     
-    fname = basepath + dirname + filename 
+    fpath = basepath / dirname  
     
     app_list = [] #list containing, for each appliance,its attributes 
     app_ID = {} #dictionary relating each appliance to an identification number, nickname and type
     
     # Reading the CSV file
-    with open(fname, mode='r') as csv_file:
+    with open(fpath / filename, mode='r') as csv_file:
         csv_reader = csv.reader(csv_file,delimiter=delimit)
         line_count = 0
         for row in csv_reader:
             if line_count == 0:
-                header = row;
+                header = row
                 line_count += 1
                 continue
             
@@ -163,7 +160,7 @@ def read_appliances(filename,delimit,dirname):
     
     # Creating a dictionary for attributes
     app_attributes = {}
-    ii = 0;
+    ii = 0
     
     for attr in header:
         app_attributes[int(ii)] = attr.lower()
@@ -172,6 +169,7 @@ def read_appliances(filename,delimit,dirname):
     # Creating a 2D-array containing appliances and attributes
     app = np.array(app_list,dtype='float')
     return(app,app_ID,app_attributes)
+
 
 ##############################################################################
 
@@ -182,32 +180,31 @@ def read_enclasses(filename,delimit,dirname):
     Inputs:
         filname - string containing the name of the file (extension of the file: .dat)
         delimit - string containing the delimiting element
+        dirname - name of the folder where to find the file to be opened and read
         
     Outputs:
         enclass_en - 2D-array containing, for each appliance (rows), and for each energetic class (columns) the yearly energy consumption (kWh/year)
         enclass_levels - dictionary containing for each energetic class (columns in app) its level 
     '''
     
-    apps_ID,apps_attributes = read_appliances('eltdome_report' , ';' , '\Input')[1:]
+    apps_ID,apps_attributes = read_appliances('eltdome_report' , ';' , 'Input')[1:]
     
     dirname = dirname.strip()
-    if not dirname.startswith('\\'): dirname = '\\' + dirname
-    if not dirname.endswith('\\'): dirname = dirname + '\\'
-
+  
     filename = filename.strip()
     if not filename.endswith('.csv'): filename = filename + '.csv'
     
-    fname = basepath + dirname + filename  
+    fpath = basepath / dirname  
     
     enclass_list = [] #list containing, for each appliance,its nominal energy consumption 
         
     # Reading the CSV file
-    with open(fname, mode='r') as csv_file:
+    with open(fpath / filename, mode='r') as csv_file:
         csv_reader = csv.reader(csv_file,delimiter=delimit)
         line_count = 0
         for row in csv_reader:
             if line_count == 0:
-                columns=row;
+                columns=row
                 line_count += 1
                 continue
             
@@ -224,7 +221,7 @@ def read_enclasses(filename,delimit,dirname):
     
     # Creating a dictionary for energetic classes' levels
     enclass_levels = {}
-    ii = 0;
+    ii = 0
     
     for attr in columns[3:]:
         enclass_levels[int(ii)] = attr
@@ -233,6 +230,7 @@ def read_enclasses(filename,delimit,dirname):
     # Creating a 2D-array containing appliances and nominal energy consumptions
     enclass_en = np.array(enclass_ordered,dtype='float') 
     return(enclass_en,enclass_levels)
+
 
 ##############################################################################
 
@@ -243,25 +241,23 @@ def read_energy(filename,delimit,dirname):
     Inputs:
         filname - string containing the name of the file (extension of the file: .dat)
         delimit - string containing the delimiting element
+        dirname - name of the folder where to find the file to be opened and read
         
     Outputs:
-        enclass_en - 2D-array containing, for each appliance (rows), and for each energetic class (columns) the yearly energy consumption (kWh/year)
-        enclass_levels - dictionary containing for each energetic class (columns in app) its level 
+        energy - 2d-array containing in each cell the value of the seasonal energy consumption from each appliance (rows) for each household (columns)
     '''
    
     dirname = dirname.strip()
-    if not dirname.startswith('\\'): dirname = '\\' + dirname
-    if not dirname.endswith('\\'): dirname = dirname + '\\'
-
+  
     filename = filename.strip()
     if not filename.endswith('.csv'): filename = filename + '.csv'
     
-    fname = basepath + dirname + filename 
+    fpath = basepath / dirname 
     
     energy_list = [] #list containing, for each appliance,its nominal energy consumption 
         
     # Reading the CSV file
-    with open(fname, mode='r') as csv_file:
+    with open(fpath / filename, mode='r') as csv_file:
         csv_reader = csv.reader(csv_file,delimiter=delimit)
         line_count = 0
         for row in csv_reader:
@@ -280,3 +276,5 @@ def read_energy(filename,delimit,dirname):
     return(energy)
 
 ##############################################################################
+
+

@@ -18,6 +18,8 @@ import numpy as np
 # interval.
 
 
+###############################################################################
+
 def aggregator(load_profile,dt_aggr):
     
     '''The function aggregates a load_profile, changing the time resolution.
@@ -27,7 +29,6 @@ def aggregator(load_profile,dt_aggr):
         dt_aggr - new timestep (time resolution) to be used (min)
         
     Output:
-        time_aggr - new time vector (min)
         lp_aggr - aggregated load profile (W)
     '''
     

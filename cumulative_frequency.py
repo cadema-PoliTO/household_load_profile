@@ -14,6 +14,7 @@ import numpy as np
 # (representing the x-axis) and a frequency density vector (representing the y-axis)
 # and returns the cumulative frequency.
 
+##############################################################################
 
 def cum_freq(time,freqdens):
       
@@ -28,19 +29,15 @@ def cum_freq(time,freqdens):
         cumfreq - cumulative frequency
     '''
     
-    
     # Creating the cumulate by adding the single values of the frequency density in each time interval 
-    
-
-    res = np.zeros(np.shape(time));
-    cum = 0;
+    res = np.zeros(np.shape(time))
+    cum = 0
     for ii in range(1,np.size(time)):
                 
         res[ii] = 0.5*(freqdens[ii] + freqdens[ii-1])*(time[ii] - time[ii-1]) + cum
         cum = res[ii]
             
     # Normalization and return
-    
     return(res/cum)  
 
     

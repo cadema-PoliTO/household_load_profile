@@ -4,6 +4,6 @@
 'ftg_avg';'m2';100
 'location';'/';'north'
 'power_max';'W';3000
-'en_class';'/';'D'
+'en_class';'/';'A'
 'toll';'%';15
 'devsta';'min';2
