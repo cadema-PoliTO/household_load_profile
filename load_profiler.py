@@ -107,7 +107,10 @@ def load_profiler(app,day,season):
     # and it is multiplied by 1000 and divided by 365 in order to get Wh/day.
     # The second one is given in minutes and it is divided by 60 to get hours.
     
-    pow = (energy*1000/365)/(T_on/60) #(W)
+    if T_on == 0:
+        pow = 0
+    else:
+        pow = (energy*1000/365)/(T_on/60) #(W)
     
     
     ########## Selecting the correct data-file to load, according to the 
