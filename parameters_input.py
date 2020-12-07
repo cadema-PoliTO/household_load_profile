@@ -60,20 +60,19 @@ energy_scale = 'Wh' #energy_scale for plotting: 'Wh' | 'kWh' | 'MWh'
 ########### Parameters update 
 
 # Simulation parameters
-varname,varval = datareader.read_param('sim_param.csv',';','Parameters')
-for ii in range(len(varname)):
-    vars()[varname[ii]] = varval[ii]
-    # print(str(varname[ii]) +': ' + str(varval[ii]))
+varname, varval = datareader.read_param('sim_param.csv',';','Parameters')
+for name, val in zip(varname, varval):
+    vars()[name] = val
     
 # Aggregation parameters
-varname,varval = datareader.read_param('aggr_param.csv',';','Parameters')
-for ii in range(len(varname)):
-    vars()[varname[ii]] = varval[ii]
+varname, varval = datareader.read_param('aggr_param.csv',';','Parameters')
+for name, val in zip(varname, varval):
+    vars()[name] = val
     
 # Plotting parameters
-varname,varval = datareader.read_param('plot_param.csv',';','Parameters')
-for ii in range(len(varname)):
-    vars()[varname[ii]] = varval[ii]
+varname, varval = datareader.read_param('plot_param.csv',';','Parameters')
+for name, val in zip(varname, varval):
+    vars()[name] = val
 
 
 ########### Parameters update to user's input
