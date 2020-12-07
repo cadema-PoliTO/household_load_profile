@@ -37,9 +37,8 @@ from profile_interpolation import interp_profile #routine created to interpolate
 
 varname,varval = datareader.read_param('sim_param.csv',';','Parameters')
 
-for ii in range(len(varname)):
-    vars()[varname[ii]] = varval[ii]
-
+for name, val in zip(varname, varval):
+    vars()[name] = val
     
 ########## Routine
  

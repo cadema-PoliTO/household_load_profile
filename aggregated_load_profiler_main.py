@@ -80,26 +80,26 @@ print(message)
 message = '\nSimulation parameters'
 print(message)
 
-varname,varval = datareader.read_param('sim_param.csv',';','Parameters')
-for ii in range(len(varname)):
-    vars()[varname[ii]] = varval[ii]
-    print(str(varname[ii]) +': ' + str(varval[ii]))
+varname, varval = datareader.read_param('sim_param.csv',';','Parameters')
+for name, val in zip(varname, varval):
+    vars()[name] = val
+    print(str(name) +': ' + str(val))
     
 message = '\nAggregation parameters'
 print(message)
     
-varname,varval = datareader.read_param('aggr_param.csv',';','Parameters')
-for ii in range(len(varname)):
-    vars()[varname[ii]] = varval[ii]
-    print(str(varname[ii]) +': ' + str(varval[ii]))
+varname, varval = datareader.read_param('aggr_param.csv',';','Parameters')
+for name, val in zip(varname, varval):
+    vars()[name] = val
+    print(str(name) +': ' + str(val))
     
 message = '\nPlotting parameters'
 print(message)
     
-varname,varval = datareader.read_param('plot_param.csv',';','Parameters')
-for ii in range(len(varname)):
-    vars()[varname[ii]] = varval[ii]
-    print(str(varname[ii]) +': ' + str(varval[ii]))
+varname, varval = datareader.read_param('plot_param.csv',';','Parameters')
+for name, val in zip(varname, varval):
+    vars()[name] = val
+    print(str(name) +': ' + str(val))
 
 # ########### Parameters update to user's input
 
