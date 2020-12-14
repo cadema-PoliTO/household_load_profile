@@ -212,6 +212,13 @@ nmax = int(np.round(n_hh*quantile_max/100))
 # day for the four seasons and the seasonal energy consumption from each 
 # appliance, for each household are evaluated.
 
+# # A random sample of n_samp houses is also extracted in order to plot, for each 
+# # of them, the load profile during one day for each season, for each day-type.
+# n_samp = 5
+# samp = random.sample(list(range(0,n_hh)),n_samp) #A random sample is extracted from the total number of households
+# sample_lp = np.zeros(time,n_samp*len(seasons)*len(days)) #The load profiles for the houses in the sample are stored in a proper array
+# sample_slicingaux = np.arange(n_samp) #This array is useful for properly slicing the households_lp array and storing the load profiles of the households in the random sample
+
 for season in seasons:
 
     season_nickname = seasons[season][1]
@@ -248,6 +255,9 @@ for season in seasons:
         quantile_lp_min = sorted_lp[:,nmin]
         quantile_lp_med = sorted_lp[:,nmed]
         quantile_lp_max = sorted_lp[:,nmax]
+
+        # # Random sample load profiles
+        # sample_lp[:,sampleslicing_aux+(ss+dd)*n_samp] = aggr_households_lp[:,samp]
         
         # Saving load profiles and quantile in a file, for each day for each season
         filename = 'aggr_lp' + '_' + season + '_' + day_nickname + '_' + str(n_hh) + '_' + en_class + '_' + location + '.csv'
@@ -274,7 +284,20 @@ for season in seasons:
     
         for app in apps_ID:
             csv_writer.writerow([app,apps_ID[app][1]]+list(energy_season[apps_ID[app][0],:]))   
-            
+
+
+# # Saving the random sample load profiles in a file
+# filename = 'randomsample_lp' + '_' + '_' + str(n_hh) + '_' + en_class + '_' + location + '.csv'
+# fpath = basepath / dirname 
+
+# with open(fpath / filename, mode='w', newline='') as csv_file:
+#     csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+#     csv_writer.writerow(['Time [min]','Load profile [W]','Load min [W]','Load med [W]','Load max [W]'])
+
+#     for ii in range(np.size(time_aggr)):
+#         csv_writer.writerow([time_aggr[ii],aggregate_lp[ii],quantile_lp_min[ii],quantile_lp_med[ii],quantile_lp_max[ii]])
+
+
 message = '\nThe results are ready and are now being plotted.\n'
 print(message)   
 
