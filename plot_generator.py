@@ -614,3 +614,72 @@ filename = 'avg_en_apps__' + season + '_' + str(n_hh) + '_' + en_class + '_' + l
 fpath = basepath / dirname / subdirname
 fig6.savefig(fpath / filename)
 
+
+
+
+
+########## Plotting the average load profiles in order to compare them in different seasons
+
+sheetsize = 'a3'
+orientation = 'horizontal'
+font = 'large'
+
+figsize = sheetsizes[sheetsize]
+if orientation == 'horizontal': figsize = figsize[::-1]
+
+fontsize_title = fontsizes_dict[font][-1]
+fontsize_legend = fontsizes_dict[font][-1]
+fontsize_labels = fontsizes_dict[font][-2]
+fontsize_text = fontsizes_dict[font][-2]
+fontsize_pielab = fontsizes_dict[font][-3]
+
+fig7, ax = plt.subplots(2,1,sharex=False,sharey=False,figsize=figsize)
+title = '\nAverage load profiles during one day \nfor %d households with %s energetic class in the %s of Italy' %(n_hh,en_class,location.capitalize())
+fig7.suptitle(title, fontsize=fontsize_title , fontweight = 'bold')
+fig7.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.85, wspace=None, hspace=0.3)
+
+ymax = 0
+ymin = 0
+
+for day in days:
+    dd = days[day][0]
+
+    for season in seasons:
+        ss = seasons[season][0]
+   
+        filename = 'aggr_lp' + '_' + season + '_' + days[day][1] + '_' + str(n_hh) + '_' + en_class + '_' + location
+        data = datareader.read_general(filename,';','Output')
+        time_aggr = data[:,0]*ts #adjusted to the selected time-scale
+        lp_aggr = data[:,1]*ps #adjusted to the selected power-scale
+        lp_avg = lp_aggr/n_hh #average load profile
+        # lp_min = data[:,2]*ps #adjusted to the selected power-scale
+        # lp_med = data[:,3]*ps #adjusted to the selected power-scale
+        # lp_max = data[:,4]*ps #adjusted to the selected power-scale
+        
+        if np.max(lp_max) >= ymax: ymax = np.max(lp_max)
+        if np.min(lp_min) <= ymin: ymin = np.min(lp_min)
+
+        ax[dd].plot(time_aggr + dt_aggr/2,lp_avg, color = colors_rgb[ss], linestyle='-', marker = 's', label=season)
+        # ax[dd].bar(time_aggr,lp_max,width=dt_aggr,align='edge',label=str(quantile_max)+'%')
+        # ax[dd].bar(time_aggr,lp_med,width=dt_aggr,align='edge',label=str(quantile_med)+'%')
+        # ax[dd].bar(time_aggr,lp_min,width=dt_aggr,align='edge',label=str(quantile_min)+'%')
+        
+    leg = day.capitalize()
+    ax[dd].set_title(leg, fontsize=fontsize_title)
+        
+    
+       
+for axi in ax.flatten():
+    axi.set_xlabel('Time [' + time_scale + ']', fontsize=fontsize_labels)
+    axi.set_ylabel('Power [' + power_scale + ']', fontsize=fontsize_labels)
+    axi.set_xlim([0,time])
+    axi.set_ylim([0.9*ymin,1.1*ymax])
+    axi.set_xticks(list(time_aggr[::int(60*ts/dt_aggr)])) #one tick each hour
+    axi.tick_params(axis='both',labelsize=fontsize_labels)
+    axi.tick_params(axis='x',labelrotation=0)
+    axi.grid()
+    axi.legend(loc='upper left',fontsize=fontsize_legend, ncol = 2)
+    
+    filename = 'avg_loadprof_comparison' + '_' + str(n_hh) + '_' + en_class + '_' + location + '.png'
+    fname = basepath / dirname / subdirname
+    fig7.savefig(fpath / filename)
