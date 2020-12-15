@@ -666,9 +666,7 @@ for day in days:
         
     leg = day.capitalize()
     ax[dd].set_title(leg, fontsize=fontsize_title)
-        
-    
-       
+     
 for axi in ax.flatten():
     axi.set_xlabel('Time [' + time_scale + ']', fontsize=fontsize_labels)
     axi.set_ylabel('Power [' + power_scale + ']', fontsize=fontsize_labels)
@@ -683,3 +681,77 @@ for axi in ax.flatten():
     filename = 'avg_loadprof_comparison' + '_' + str(n_hh) + '_' + en_class + '_' + location + '.png'
     fname = basepath / dirname / subdirname
     fig7.savefig(fpath / filename)
+
+
+
+########## Plotting the random sample load profiles
+
+sheetsize = 'a3'
+orientation = 'horizontal'
+font = 'large'
+
+figsize = sheetsizes[sheetsize]
+if orientation == 'horizontal': figsize = figsize[::-1]
+
+fontsize_title = fontsizes_dict[font][-1]
+fontsize_legend = fontsizes_dict[font][-1]
+fontsize_labels = fontsizes_dict[font][-2]
+fontsize_text = fontsizes_dict[font][-2]
+fontsize_pielab = fontsizes_dict[font][-3]
+
+
+filename = 'randomsample_lp' + '_' + str(n_hh) + '_' + en_class + '_' + location
+data = datareader.read_general(filename,';','Output')
+    
+time_plot = data[:,0]*ts #adjusted to the selected time-scale
+
+#One columns is not taken into account since it contains the time vector, the remaining columns 
+# are divided by the total number of days in order to get the size of the random sample (in terms of households)
+n_samp = int((np.size(data, axis=1) - 1)/(len(seasons)*len(days))) 
+sample_slicingaux = np.arange(n_samp) #This array is useful for properly slicing the data array
+
+for season in seasons:
+    ss = seasons[season][0]
+    
+    # A figure with multiple subplots is created, with as many rows as the seasons,
+    # for each row there two columns (for week-days and weekend-days)
+    fig8, ax = plt.subplots(2,1,sharex=False,sharey=False,figsize=figsize)
+    
+    title = '\nRandom sample load profiles during one day \nfor %d households with %s energetic class in the %s of Italy' %(n_hh,en_class,location.capitalize())
+    fig8.suptitle(title, fontsize=fontsize_title , fontweight = 'bold')
+    fig8.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.85, wspace=None, hspace=0.3)
+    
+    ymax = 0
+    ymin = 0
+    
+    for day in days:
+        dd = days[day][0]
+        
+        start = 1 + (ss+dd+ss)*n_samp #index where to start slicing (in the first column there's the time vector)
+        randomsample_lp = data[: , start + sample_slicingaux]*ps #adjusted to the selected power-scale
+       
+        if np.max(randomsample_lp) >= ymax: ymax = np.max(randomsample_lp)
+        if np.min(randomsample_lp) <= ymin: ymin = np.min(randomsample_lp)
+        
+        leg = season.capitalize() + ', ' + day
+
+        for ii in range(n_samp):
+            ax[dd].plot(time_plot,randomsample_lp[:,ii], color=colors_rgb[ii])
+        
+        ax[dd].set_title(leg, fontsize=fontsize_title)
+        
+        
+    for axi in ax.flatten():
+        axi.set_xlabel('Time [' + time_scale + ']', fontsize=fontsize_labels)
+        axi.set_ylabel('Power [' + power_scale + ']', fontsize=fontsize_labels)
+        axi.set_xlim([0,time])
+        axi.set_ylim([0.9*ymin,1.1*ymax])
+        axi.set_xticks(list(time_plot[::int(60*ts/dt)])) #one tick each hour
+        axi.tick_params(axis='both',labelsize=fontsize_labels)
+        axi.tick_params(axis='x',labelrotation=0)
+        axi.grid()
+    
+    filename = 'randomsample_loadprof_' + season + '_' + str(n_hh) + '_' + en_class + '_' + location + '.png'
+    fname = basepath / dirname / subdirname
+    fig8.savefig(fpath / filename)
+    

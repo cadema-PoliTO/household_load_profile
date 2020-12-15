@@ -291,18 +291,16 @@ for season in seasons:
 
 
 # Saving the random sample load profiles in a file, after giving a different time-step
-sample_aggr_lp = agr(sample_lp,dt_aggr)
-
-filename = 'randomsample_lp' + '_' + '_' + str(n_hh) + '_' + en_class + '_' + location + '.csv'
+filename = 'randomsample_lp' + '_' + str(n_hh) + '_' + en_class + '_' + location + '.csv'
 fpath = basepath / dirname 
 
 with open(fpath / filename, mode='w', newline='') as csv_file:
     csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
     csv_writer.writerow(sample_lp_header)
 
-    for ii in range(np.size(time_aggr)):
-        csv_writer.writerow([[time_aggr[ii]] + list(sample_aggr_lp[ii,:])])
-        print(sample_aggr_lp[ii,:])
+    for ii in range(np.size(time_sim)):
+        csv_writer.writerow([time_sim[ii]] + list(sample_lp[ii,:]))
+ 
 
 message = '\nThe results are ready and are now being plotted.\n'
 print(message)   
