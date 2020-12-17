@@ -763,9 +763,228 @@ fontsizes_dict = {'small':(8,10,12),
 
 ########## Plotting the load profiles
 
-def aggr_load_profile(time_aggr, power_aggr, season, **params):
+# def aggr_load_profile(time, powers, season, **params):
 
-    #Default parameters
+#     #Default parameters
+#     def_params = {
+#     'time_scale': 'h',
+#     'power_scale': 'kW',
+#     'energy_scale': 'MWh',
+#     'figsize': (297/25.4 , 420/25.4),
+#     'orientation': 'horizontal',
+#     'font_small': 14,
+#     'font_medium': 16,
+#     'font_large': 18,
+#     }
+    
+#     # The parameters that are not specified when the function is called are set to the default value
+#     for param in def_params: 
+#         if param not in params: params[param] = def_params[param]
+
+#     # Scales setup: factors needed to turn the values of time, power and energy in the correct scale
+#     time_scale = params['time_scale']
+#     power_scale = params['power_scale']
+#     energy_scale = params['energy_scale']
+
+#     ts = ts_dict[time_scale]
+#     ps = ps_dict[power_scale]
+#     es = es_dict[energy_scale]
+
+#     # Time and power are adjusted to the proper scales
+#     time = time*ts
+#     powers = powers*ps
+
+#     # Figure setup: figure size and orientatio, font-sizes 
+#     figsize = params['figsize']
+#     orientation = params['orientation']
+
+#     if orientation == 'horizontal': figsize = figsize[::-1]
+
+#     fontsize_title = params['font_large']
+#     fontsize_legend = params['font_medium']
+#     fontsize_labels = params['font_medium']
+#     fontsize_text = params['font_medium']
+#     fontsize_ticks = params['font_small']
+        
+#     # A figure with multiple subplots is created, with as many rows as the seasons,
+#     # for each row there two columns (for week-days and weekend-days)
+#     fig, ax = plt.subplots(2,1,sharex=False,sharey=False,figsize=figsize)
+        
+#     suptitle = '\nAggregated load profiles during one day \nfor {} households with {} energetic class in the {} of Italy'.format(n_hh,en_class,location.capitalize())
+#     fig.suptitle(suptitle, fontsize=fontsize_title , fontweight = 'bold')
+#     fig.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.85, wspace=None, hspace=0.3)
+    
+#     ymax = 0
+#     ymin = 0
+
+#     # Evaluating the time-step of the time-vector in order to set the bars' width
+#     dt = (time[-1] - time[0])/np.size(time)
+    
+#     for day in days:
+
+#         # Number corresponding to the type of day (0: week-day, 1: week-end -day)
+#         dd = days[day][0] 
+
+#         if np.max(powers[:,dd]) >= ymax: ymax = np.max(powers[:,dd])
+#         if np.min(powers[:,dd]) <= ymin: ymin = np.min(powers[:,dd])
+        
+
+        
+#         # Title of the subplot
+#         title = season.capitalize() + ', ' + day
+#         ax[dd].bar(time, powers[:,dd], width=dt, align='edge')
+#         ax[dd].set_title(title, fontsize=fontsize_title)
+        
+    
+#     for axi in ax.flatten():
+#         axi.set_xlabel('Time [{}]'.format(time_scale), fontsize=fontsize_labels)
+#         axi.set_ylabel('Power [{}]'.format(power_scale), fontsize=fontsize_labels)
+#         axi.set_xlim([time[0],time[-1]])
+#         axi.set_ylim([0.9*ymin,1.1*ymax])
+#         # Set one tick each hour on the x-axis
+#         axi.set_xticks(list(time[::int(60*ts/dt)]))
+#         axi.tick_params(axis='both',labelsize=fontsize_labels)
+#         axi.tick_params(axis='x',labelrotation=0)
+#         axi.grid()
+        
+#     fig.subplots_adjust(wspace=0.2)
+
+#     return(fig)
+
+
+# ########## Plotting the load profile quantile
+
+# def load_profiles(time, powers, plot_specs, season, **params)
+
+
+
+#    #Default parameters
+#     def_params = {
+#     'time_scale': 'h',
+#     'power_scale': 'kW',
+#     'energy_scale': 'MWh',
+#     'figsize': (297/25.4 , 420/25.4),
+#     'orientation': 'horizontal',
+#     'font_small': 14,
+#     'font_medium': 16,
+#     'font_large': 18,
+#     }
+    
+#     # The parameters that are not specified when the function is called are set to the default value
+#     for param in def_params: 
+#         if param not in params: params[param] = def_params[param]
+
+#     # Scales setup: factors needed to turn the values of time, power and energy in the correct scale
+#     time_scale = params['time_scale']
+#     power_scale = params['power_scale']
+#     energy_scale = params['energy_scale']
+
+#     ts = ts_dict[time_scale]
+#     ps = ps_dict[power_scale]
+#     es = es_dict[energy_scale]
+
+#     # Time and power are adjusted to the proper scales
+#     time = time*ts
+#     powers= powers*ps
+
+#     # Figure setup: figure size and orientatio, font-sizes 
+#     figsize = params['figsize']
+#     orientation = params['orientation']
+
+#     if orientation == 'horizontal': figsize = figsize[::-1]
+
+#     fontsize_title = params['font_large']
+#     fontsize_legend = params['font_medium']
+#     fontsize_labels = params['font_medium']
+#     fontsize_text = params['font_medium']
+#     fontsize_ticks = params['font_small']
+#     fontsize_pielabels = params['font_small']
+
+    
+#     # A figure with multiple subplots is created, with as many rows as the seasons,
+#     # for each row there two columns (for week-days and weekend-days)
+#     fig, ax = plt.subplots(2,1,sharex=False,sharey=False,figsize=figsize)
+    
+#     suptitle = '\nAverage load profile and quantile during one day \nfor %d households with %s energetic class in the %s of Italy' %(n_hh,en_class,location.capitalize())
+#     fig.suptitle(suptitle, fontsize=fontsize_title , fontweight = 'bold')
+#     fig.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.85, wspace=None, hspace=0.3)
+    
+  
+
+#     # Evaluating the time-step of the time-vector in order to set the bars' width
+#     dt = (time[-1] - time[0])/np.size(time)
+
+    
+#     # Evaluating the number of profiles passed to the function for each day-type 
+#     # It is given for ganted that only two day-types are considered
+#     n_lps =  int(np.size(powers, axis=1)/np.size(days))
+
+#     #This array is useful for properly slicing the powers-array
+#     powers_slicingaux = np.arange(n_lps) 
+    
+#     for day in days:
+
+#         # Number corresponding to the type of day (0: week-day, 1: week-end -day)
+#         dd = days[day][0] 
+    
+
+#         # Index needed for slicing the powers-array, according to the day of the week
+#         start = dd*n_lps 
+
+#         title = season.capitalize() + ', ' + day
+
+#         for lp in range(n_lps):
+
+#             if plot_specs[lp][0] == 'plot':
+#             ax[dd].plot(time + dt/2, powers[:, start + lp], color  = colors[lp], linestyle = '-', label = plot_specs[lp][1])
+ 
+#             elif plot_specs[lp][0] == 'bar':
+#             ax[dd].bar(time, powers[:, start + lp], width=dt, align='edge', label= plot_specs[lp][1])
+
+        
+#         ax[dd].set_title(leg, fontsize=fontsize_title)
+        
+#       for axi in ax.flatten():
+#         axi.set_xlabel('Time [{}]'.format(time_scale), fontsize=fontsize_labels)
+#         axi.set_ylabel('Power [{}]'.format(power_scale), fontsize=fontsize_labels)
+#         axi.set_xlim([time[0],time[-1]])
+#         axi.set_ylim([0.9*ymin,1.1*ymax])
+#         # Set one tick each hour on the x-axis
+#         axi.set_xticks(list(time[::int(60*ts/dt)]))
+#         axi.tick_params(axis='both',labelsize=fontsize_labels)
+#         axi.tick_params(axis='x',labelrotation=0)
+#         axi.grid()
+
+#     for axi in ax.flatten():
+#         axi.set_xlabel('Time [' + time_scale + ']', fontsize=fontsize_labels)
+#         axi.set_ylabel('Power [' + power_scale + ']', fontsize=fontsize_labels)
+#         axi.set_xlim([time[0], time[-1]])
+#         axi.set_ylim([0.9*ymin, 1.1*ymax])
+#         axi.set_xticks(list(time[::int(60*ts/dt_aggr)])) #one tick each hour
+#         axi.tick_params(axis='both',labelsize=fontsize_labels)
+#         axi.tick_params(axis='x',labelrotation=0)
+#         axi.grid()
+#         axi.legend(loc='upper left',fontsize=fontsize_legend, ncol = 2)
+    
+#     filename = 'avg_quant_loadprof_' + season + '_' + str(n_hh) + '_' + en_class + '_' + location + '.png'
+#     fname = basepath / dirname / subdirname
+#     fig2.savefig(fpath / filename)
+
+
+
+# plot_specs = {
+#     0: ['plot', 'Average'],
+#     1: ['bar', '{} %'.format(quantile_max),],
+#     2: ['bar', '{} %'.format(quantile_med),],
+#     3: ['bar', '{} %'.format(quantile_min),],
+# }
+
+
+
+
+def seasonal_load_profiles(time, powers, plot_specs, season, **params):
+
+   #Default parameters
     def_params = {
     'time_scale': 'h',
     'power_scale': 'kW',
@@ -791,8 +1010,8 @@ def aggr_load_profile(time_aggr, power_aggr, season, **params):
     es = es_dict[energy_scale]
 
     # Time and power are adjusted to the proper scales
-    time_aggr = time_aggr*ts
-    power_aggr = power_aggr*ps
+    time = time*ts
+    powers= powers*ps
 
     # Figure setup: figure size and orientatio, font-sizes 
     figsize = params['figsize']
@@ -805,52 +1024,252 @@ def aggr_load_profile(time_aggr, power_aggr, season, **params):
     fontsize_labels = params['font_medium']
     fontsize_text = params['font_medium']
     fontsize_ticks = params['font_small']
-        
+    fontsize_pielabels = params['font_small']
+
+    
     # A figure with multiple subplots is created, with as many rows as the seasons,
     # for each row there two columns (for week-days and weekend-days)
     fig, ax = plt.subplots(2,1,sharex=False,sharey=False,figsize=figsize)
-        
-    suptitle = '\nAggregated load profiles during one day \nfor {} households with {} energetic class in the {} of Italy'.format(n_hh,en_class,location.capitalize())
+    
+    suptitle = '\nAverage load profile and quantile during one day {}'.format(
+        '\nfor {} households with {} energetic class in the {} of Italy'.format(n_hh,en_class,location.capitalize()))
     fig.suptitle(suptitle, fontsize=fontsize_title , fontweight = 'bold')
     fig.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.85, wspace=None, hspace=0.3)
-    
-    ymax = 0
-    ymin = 0
+   
 
-    #Evaluating the time-step of the time-vector in order to set the bars' width
-    dt_aggr = (time_aggr[-1] - time_aggr[0])/np.size(time_aggr)
+    # Evaluating the time-step of the time-vector in order to set the bars' width
+    dt = float((time[-1] - time[0])/(np.size(time)-1))
+    print(type(dt))
+    print(dt)
+
+    # Evaluating the number of profiles passed to the function for each day-type 
+    # It is given for ganted that only two day-types are considered
+    n_lps =  int(np.size(powers, axis=1)/len(days))
     
     for day in days:
-        
+
         # Number corresponding to the type of day (0: week-day, 1: week-end -day)
         dd = days[day][0] 
+    
+        # Index needed for slicing the powers-array, according to the day of the week
+        start = dd*n_lps 
+
+
+        for lp in range(n_lps):
+
+            power = powers[:,start + lp]
+            plot_type = plot_specs[lp][0]
+            legend = plot_specs[lp][1]
+
+            if plot_type == 'plot':
+                ax[dd].plot(time + dt/2, power, color  = colors_rgb[lp], linestyle = '-', label = legend)
+ 
+            elif plot_type == 'bar':
+                ax[dd].bar(time, power, color  = colors_rgb[lp], width=dt, align='edge', label = legend)
         
-        if np.max(power_aggr) >= ymax: ymax = np.max(power_aggr)
-        if np.min(power_aggr) <= ymin: ymin = np.min(power_aggr)
-        
-        # Title of the subplot
-        title = season.capitalize() + ', ' + day
-        ax[dd].bar(time_aggr, power_aggr, width=dt_aggr, align='edge')
+        title = '{}, {}'.format(season.capitalize(),day)
         ax[dd].set_title(title, fontsize=fontsize_title)
         
-        
+
     for axi in ax.flatten():
-        axi.set_xlabel('Time [{}]'.format(time_scale), fontsize=fontsize_labels)
-        axi.set_ylabel('Power [{}]'.format(power_scale), fontsize=fontsize_labels)
-        axi.set_xlim([time_aggr[0],time_aggr[-1]])
-        axi.set_ylim([0.9*ymin,1.1*ymax])
-        axi.set_xticks(list(time_aggr[::int(60*ts/dt_aggr)]))
+        axi.set_xlabel('Time [{}]'.format(time_scale), fontsize = fontsize_labels)
+        axi.set_ylabel('Power [{}]'.format(power_scale), fontsize = fontsize_labels)
+        axi.set_xlim([time[0], time[-1]])
+        ymin = np.min(powers); ymax = np.max(powers)
+        axi.set_ylim([0.9*ymin, 1.1*ymax])
+        # Set one tick each hour on the x-axis
+        axi.set_xticks(list(time[::int(60*ts/dt)]))
         axi.tick_params(axis='both',labelsize=fontsize_labels)
         axi.tick_params(axis='x',labelrotation=0)
         axi.grid()
+        axi.legend(loc='upper left',fontsize=fontsize_legend, ncol = 2)
+    
+    
+    return(fig)
+
+
+
+
+########## Total energy consumption from classes of appliances for season
+
+# First, the energy consumptions from the various appliances aggregated into
+# energy consumptions from classes of appliances, in order to improve the 
+# readability of the charts. THe class of the various appliances is defined
+# in the apps_ID dictionary.
+
+es = 1
+
+energy_w = np.random.randint(100, size = (len(apps_ID),n_hh))
+energy_p = np.random.randint(100, size = (len(apps_ID),n_hh))
+energy_s = np.random.randint(100, size = (len(apps_ID),n_hh))
+energy_a = np.random.randint(100, size = (len(apps_ID),n_hh))
+
+energy_w_tot = np.sum(energy_w,axis=1)*es #adjusted to the energy scale
+energy_p_tot = np.sum(energy_p,axis=1)*es
+energy_s_tot = np.sum(energy_s,axis=1)*es
+energy_a_tot = np.sum(energy_a,axis=1)*es
+
+apps_classes = {}
+ii = 0
+for app in apps_ID:
+    if apps_ID[app][5] not in apps_classes: 
+        apps_classes[apps_ID[app][5]] = (ii , colors_rgb[ii] )
+        ii += 1
+
+energy_w_tot_class = np.zeros(len(apps_classes))
+energy_p_tot_class = np.zeros(len(apps_classes))
+energy_s_tot_class = np.zeros(len(apps_classes))
+energy_a_tot_class = np.zeros(len(apps_classes))
+
+for app_class in apps_classes:
+    
+    apps_list=[]
+    for app in apps_ID:
+        if apps_ID[app][5] == app_class:apps_list.append(apps_ID[app][0])
+    
+    energy_w_tot_class[apps_classes[app_class][0]] = np.sum(energy_w_tot[apps_list])
+    energy_p_tot_class[apps_classes[app_class][0]] = np.sum(energy_p_tot[apps_list])
+    energy_s_tot_class[apps_classes[app_class][0]] = np.sum(energy_s_tot[apps_list])
+    energy_a_tot_class[apps_classes[app_class][0]] = np.sum(energy_a_tot[apps_list]) 
+    
+
+# The total energy consumption from the classes of appliances is represented
+
+
+def seasonal_energy(energies, plot_specs, **params):
+
+   #Default parameters
+    def_params = {
+    'time_scale': 'h',
+    'power_scale': 'kW',
+    'energy_scale': 'MWh',
+    'figsize': (297/25.4 , 420/25.4),
+    'orientation': 'horizontal',
+    'font_small': 14,
+    'font_medium': 16,
+    'font_large': 18,
+    }
+    
+    # The parameters that are not specified when the function is called are set to the default value
+    for param in def_params: 
+        if param not in params: params[param] = def_params[param]
+
+    # Scales setup: factors needed to turn the values of time, power and energy in the correct scale
+    time_scale = params['time_scale']
+    power_scale = params['power_scale']
+    energy_scale = params['energy_scale']
+
+    ts = ts_dict[time_scale]
+    ps = ps_dict[power_scale]
+    es = es_dict[energy_scale]
+
+    # Energies are adjusted to the proper scales
+    energies = energies*es
+
+    # Figure setup: figure size and orientatio, font-sizes 
+    figsize = params['figsize']
+    orientation = params['orientation']
+
+    if orientation == 'horizontal': figsize = figsize[::-1]
+
+    fontsize_title = params['font_large']
+    fontsize_legend = params['font_medium']
+    fontsize_labels = params['font_medium']
+    fontsize_text = params['font_medium']
+    fontsize_ticks = params['font_small']
+    fontsize_pielabels = params['font_small']
+
+
+    fig, ax = plt.subplots(figsize=figsize)
+    suptitle = '\nTotal energy consumption from classes of appliances by season {}'.format(
+        '\n for {} households with {} energetic class in the {} of Italy'.format(n_hh,en_class,location.capitalize()))
+    fig.suptitle(suptitle, fontsize =fontsize_title , fontweight = 'bold')
+    fig.subplots_adjust(left=0.1, bottom=0.2, right=0.9, top=0.88, wspace=None, hspace=0.3)
+
+    labels = [apps_class.capitalize().replace('_',' ') for apps_class in apps_classes]
+    # 
+    #for apps_class in apps_classes.keys(): labels.append(apps_class.capitalize().replace('_',' '))
+
+    bottoms = np.zeros(len(labels))
+    print(np.shape(bottoms))
+
+    leg = []
+
+    ymax = 0
+    text_coord = 0,ymax
+    text_toadd = ''
+
+    text_toadd = 'Energy consumption by season\n'
+    for season in seasons:
         
-    fig.subplots_adjust(wspace=0.2)
+        # Number corresponding to the season (0: winter, 1: summer, 2: spring, 3: autumn)
+        ss = seasons[season][0]
+
+        # Energies corresponding to the seasonal consumption
+        heights = energies[ss, :]
+        print(np.shape(heights))
+        print(np.shape(bottoms))
+        
+        ax.bar(labels,heights,bottom=bottoms)
+        bottoms = bottoms + heights
+        
+        if np.max(bottoms) > ymax: ymax = np.max(bottoms)
+        
+        leg.append(season.capitalize())
+        
+        text_coord = 0,ymax
+        text_toadd = text_toadd + '\n%s: %.3f %s\n' % (season.capitalize(),np.sum(heights),energy_scale) 
+
+
+    ax.set_ylim([0,1.1*ymax])
+
+    ax.set_ylabel('Energy consumption [' + energy_scale + '/year]', fontsize=fontsize_labels)
+    ax.tick_params(axis='both',labelsize=fontsize_labels)
+    ax.tick_params(axis='x',labelrotation=45)
+    ax.grid(axis='y')
+
+    ax.legend(leg,loc='upper left',ncol=len(seasons),fontsize=fontsize_legend)
+
+    props = dict(boxstyle='square', facecolor=colors_rgb[2], pad = 0.3, alpha=0.5)                     
+    ax.text(0.02, 0.9, text_toadd.rstrip(), fontsize=fontsize_text, ha='left', va='top', transform=ax.transAxes ,bbox=props)
+
 
     return(fig)
 
+f=input()
+
+
+
+
+energies = np.array((energy_w_tot_class,energy_s_tot_class,energy_p_tot_class,energy_a_tot_class))
+print(np.shape(energies))
+print(np.shape(energies[0,:,]))
+fig = seasonal_energy(energies,'a')
+fig.savefig('shish.png')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
 time_aggr=np.arange(0,1440,15)
-lp_aggr=np.random.randint(100,size=np.shape(time_aggr))
+lp1_aggr=np.random.randint(100,size=np.shape(time_aggr))
+lp2_aggr=np.random.randint(100,size=np.shape(time_aggr))
+
+powers = np.column_stack((lp1_aggr,lp2_aggr))
 
 mm2inch = 1/25.4
 params = {
@@ -870,6 +1289,11 @@ plot_params = {
     'energy_scale': 'MWh'
 }
 
-fig = aggr_load_profile(time_aggr,lp_aggr,'winter',**params,**fontsizes_dict,**plot_params)
+plot_specs = {
+    0: ['plot', 'Total'],
+   
+}
+
+fig = seasonal_load_profiles(time_aggr,powers,plot_specs,'winter',**params,**fontsizes_dict,**plot_params)
 
 fig.savefig('eeeh.png')
