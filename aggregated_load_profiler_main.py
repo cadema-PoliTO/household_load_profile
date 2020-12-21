@@ -14,8 +14,10 @@ from pathlib import Path
 
 import datareader
 import parameters_input as inp
+import plot_generator  as plot
 from house_load_profiler import house_load_profiler as hlp
 from load_profile_aggregator import aggregator as agr
+
 
 ###############################################################################
 
@@ -173,8 +175,8 @@ for app in apps_ID:
     distr_fact = apps[apps_ID[app][0], #first index: ID number of the appliance
                 location_dict[location]] #second index: position of the attribute in apps
                 
-    n_apps=int(np.round(n_hh*distr_fact)) #number of households in which the appliance is available        
-    samp = random.sample(list(range(0,n_hh)),n_apps) #a random sample is extracted from the total number of households
+    n_apps_app_type=int(np.round(n_hh*distr_fact)) #number of households in which the appliance is available        
+    samp = random.sample(list(range(0,n_hh)),n_apps_app_type) #a random sample is extracted from the total number of households
     
     apps_availability[apps_ID[app][0],samp] = 1 #the appliance's' availability is assigned to the households present in the sample
 
@@ -220,90 +222,168 @@ sample_lp = np.zeros((time,n_samp*len(seasons)*len(days))) #The load profiles fo
 sample_slicingaux = np.arange(n_samp) #This array is useful for properly slicing the households_lp array and storing the load profiles of the households in the random sample
 sample_lp_header = [] #list where to store the header for the .csv file
 
+n_days = len(days)
+n_seasons = len(seasons)
+n_time_aggr = np.size(time_aggr)
+n_apps = len(apps_ID)
+
+load_profiles_types = {
+    0: 'Total',
+    1: 'Average',
+    2: 'Maximum',
+    3: 'Medium',
+    4: 'Minimum',
+    }
+n_lps = len(load_profiles_types)
+
+load_profiles_stor = np.zeros((n_seasons, n_time_aggr*n_days, n_lps))
+energy_stor = np.zeros((n_seasons, n_apps, n_hh))
+
+
 for season in seasons:
 
     season_nickname = seasons[season][1]
     ss = seasons[season][0]
 
     # The energy consumption from all the apps is stored for each season.
-    energy_season = np.zeros((len(apps_ID),n_hh))
-    
+    energy_season = np.zeros((len(apps_ID), n_hh))
+
+    # seasonal_avg_quant_lps = np.zeros((len(time_aggr), 4*len(days)))
+    # seasonal_tot_lps = np.zeros((len(time_aggr), len(days)))
+
     for day in days:
         
         day_nickname = days[day][1]
         dd = days[day][0]
         
-        
         ########## The load profile (lp) is generated for all the households, according
         # to the availability of each appliance in the household
         
-        households_lp = np.zeros((time,n_hh)) # 2d-array containing the load profile in time (rows) for each household (columns)
-        apps_energy = np.zeros((len(apps_ID),n_hh)) # 2d-array containing the energy consumed in one day by each appliance (rows) for each household (columns)
+        households_lp = np.zeros((time, n_hh)) # 2d-array containing the load profile in time (rows) for each household (columns)
+        apps_energy = np.zeros((len(apps_ID), n_hh)) # 2d-array containing the energy consumed in one day by each appliance (rows) for each household (columns)
         
         # The house_load_profiler routine is applied to each household
         for household in range(0,n_hh):
             
-            households_lp[:,household],apps_energy[:,household] = hlp(apps_availability[:,household],day_nickname,season_nickname)
+            households_lp[:,household], apps_energy[:,household] = hlp(apps_availability[:, household], day_nickname, season_nickname)
             #(W)                      #(Wh/day)
         
         ########## Load aggregation and processing of the results
         
         # The load profile is aggregated with a different timestep
-        aggr_households_lp = agr(households_lp,dt_aggr)
+        aggr_households_lp = agr(households_lp, dt_aggr)
         
         # Load profiles and quantile
-        aggregate_lp = np.sum(aggr_households_lp,axis=1) #1d-array containing the sum of all the load profiles in time
-        sorted_lp = np.sort(aggr_households_lp,axis=1) #for each timestep, the values of the power from each households are sorted in an increasing way
+        aggregate_lp = np.sum(aggr_households_lp, axis = 1) #1d-array containing the sum of all the load profiles in time
+        average_lp = aggregate_lp/n_hh
+        sorted_lp = np.sort(aggr_households_lp, axis = 1) #for each timestep, the values of the power from each households are sorted in an increasing way
         
-        quantile_lp_min = sorted_lp[:,nmin]
-        quantile_lp_med = sorted_lp[:,nmed]
-        quantile_lp_max = sorted_lp[:,nmax]
+        quantile_lp_min = sorted_lp[:, nmin]
+        quantile_lp_med = sorted_lp[:, nmed]
+        quantile_lp_max = sorted_lp[:, nmax]
 
         # Random sample load profiles
-        sample_lp[:,sample_slicingaux+(ss+dd+ss)*n_samp] = households_lp[:,samp]
-        sample_lp_header += [season + ',' + day]*n_samp
+        sample_lp[:, sample_slicingaux + (ss + dd + ss)*n_samp] = households_lp[:, samp]
+        sample_lp_header += ['{}, {}'.format(season, day)]*n_samp
 
         # Saving load profiles and quantile in a file, for each day for each season
-        filename = 'aggr_lp' + '_' + season + '_' + day_nickname + '_' + str(n_hh) + '_' + en_class + '_' + location + '.csv'
-        fpath = basepath / dirname 
-        
-        with open(fpath / filename, mode='w', newline='') as csv_file:
-            csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
-            csv_writer.writerow(['Time [min]','Load profile [W]','Load min [W]','Load med [W]','Load max [W]'])
-    
-            for ii in range(np.size(time_aggr)):
-                csv_writer.writerow([time_aggr[ii],aggregate_lp[ii],quantile_lp_min[ii],quantile_lp_med[ii],quantile_lp_max[ii]])
+
+
+        load_profiles_stor[ss, n_time_aggr*dd , :] = np.column_stack((aggregate_lp, average_lp, quantile_lp_max, quantile_lp_med, quantile_lp_min))
+        # seasonal_avg_quant_lps[:, np.arange(4) + dd*4] = np.column_stack((aggregate_lp/n_hh, quantile_lp_max, quantile_lp_med, quantile_lp_min))
+
+
         
         ########## Energy consumed by the appliances
         n_days = days_distr[season][day]
-        energy_season += apps_energy*n_days
+        energy_stor[ss, :, :] += apps_energy*n_days
+
+
+
+
+
+
+## Post-processing of the results
+# Running through the seasons to store the load profiles and powers as .csv files
+# and calling the methods in plot_generator to create and save figures
+
+dirname = 'Outputs'
+subdirname = 'Figures'
+
+try: Path.mkdir(basepath / dirname / subdirname)
+except Exception: pass 
+    
+
+for season in seasons:
+
+    ss = seasons[seasons][0]
+
+    # Total load profiles       
+    plot_specs = {
+    0: ['bar', 'Total'],
+    }
+
+    fig = plot.seasonal_load_profiles(time_aggr, load_profiles_stor[ss, n_time_aggr*dd, 0], plot_specs, season)
+
+    filename = '{}_{}_{}_{}-aggr_loadprof.png'.format(location, en_class, season, n_hh)
+    fpath = basepath / dirname / subdirname
+    
+    fig.savefig(fpath / filename)
+
+    # Average load profile and quantiles
+    plot_specs = {
+    0: ['plot', 'Average'],
+    1: ['bar', 'Min'],
+    2: ['bar', 'Med'],
+    3: ['bar', 'Max']
+    }
+
+    fig = plot.seasonal_load_profiles(time_aggr, load_profiles_stor[ss, n_time_aggr*dd, 0], plot_specs, season)
+
+    filename = '{}_{}_{}_{}_avg_quant_loadprof.png'.format(location, en_class, season, n_hh)
+    fpath = basepath / dirname / subdirname
+    
+    fig.savefig(fpath / filename)
+
+
+#     # Saving the energy consumed by the appliances in each household, for each season
+#     filename = 'energy' + '_' + season + '_' + str(n_hh) + '_' + en_class + '_' + location + '.csv'
+#     fpath = basepath / dirname 
+    
+#     with open(fpath / filename, mode='w', newline='') as csv_file:
+#         csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+#         csv_writer.writerow(['App_name', 'App_nickname'] + list(range(0,n_hh)))
+    
+#         for app in apps_ID:
+#             csv_writer.writerow([app,apps_ID[app][1]]+list(energy_season[apps_ID[app][0],:]))   
+
+
+
+#       filename = 'aggr_lp_{}_{}_{}_{}_{}.csv'.format(location, en_class, season, day_nickname, n_hh)
+#         fpath = basepath / dirname 
         
-    # Saving the energy consumed by the appliances in each household, for each season
-    filename = 'energy' + '_' + season + '_' + str(n_hh) + '_' + en_class + '_' + location + '.csv'
-    fpath = basepath / dirname 
+#         with open(fpath / filename, mode = 'w', newline = '') as csv_file:
+#             csv_writer = csv.writer(csv_file, delimiter = ';', quotechar = "'", quoting = csv.QUOTE_NONNUMERIC)
+#             csv_writer.writerow(['Time (min)', 'Load profile (W)','Load min (W)','Load med (W)','Load max (W)'])
     
-    with open(fpath / filename, mode='w', newline='') as csv_file:
-        csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
-        csv_writer.writerow(['App_name','App_nickname']+list(range(0,n_hh)))
-    
-        for app in apps_ID:
-            csv_writer.writerow([app,apps_ID[app][1]]+list(energy_season[apps_ID[app][0],:]))   
+#             for ii in range(np.size(time_aggr)):
+#                 csv_writer.writerow([time_aggr[ii], aggregate_lp[ii], quantile_lp_min[ii], quantile_lp_med[ii], quantile_lp_max[ii]])
 
 
-# Saving the random sample load profiles in a file, after giving a different time-step
-filename = 'randomsample_lp' + '_' + str(n_hh) + '_' + en_class + '_' + location + '.csv'
-fpath = basepath / dirname 
+# # Saving the random sample load profiles in a file, after giving a different time-step
+# filename = 'randomsample_lp' + '_' + str(n_hh) + '_' + en_class + '_' + location + '.csv'
+# fpath = basepath / dirname 
 
-with open(fpath / filename, mode='w', newline='') as csv_file:
-    csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
-    csv_writer.writerow(sample_lp_header)
+# with open(fpath / filename, mode='w', newline='') as csv_file:
+#     csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+#     csv_writer.writerow(sample_lp_header)
 
-    for ii in range(np.size(time_sim)):
-        csv_writer.writerow([time_sim[ii]] + list(sample_lp[ii,:]))
+#     for ii in range(np.size(time_sim)):
+#         csv_writer.writerow([time_sim[ii]] + list(sample_lp[ii,:]))
  
 
 message = '\nThe results are ready and are now being plotted.\n'
 print(message)   
 
-import plot_generator as plot
+
     

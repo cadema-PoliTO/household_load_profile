@@ -244,7 +244,7 @@ def seasonal_load_profiles(time, powers, plot_specs, season, **params):
             legend = plot_specs[lp][1]
 
             if plot_type == 'plot':
-                ax[dd].plot(time + dt/2, power, color = colors_rgb[lp], linestyle = '-', label = legend)
+                ax[dd].plot(time + dt/2, power, color = colors_rgb[lp], linestyle = 's-', label = legend)
  
             elif plot_type == 'bar':
                 ax[dd].bar(time, power, color = colors_rgb[lp], width = dt, align = 'edge', label = legend)
@@ -748,85 +748,85 @@ for app_class in apps_classes:
 
 
 
-f=input()
+# f=input()
 
 
 
-mm2inch = 1/25.4
-params = {
-    'figsize': (297*mm2inch,420*mm2inch),
-    'orientation': 'horizontal'
-}
+# mm2inch = 1/25.4
+# params = {
+#     'figsize': (297*mm2inch,420*mm2inch),
+#     'orientation': 'horizontal'
+# }
 
-fontsizes_dict = {
-    'font_small': 14,
-    'font_medium': 16,
-    'font_large': 18
-}
+# fontsizes_dict = {
+#     'font_small': 14,
+#     'font_medium': 16,
+#     'font_large': 18
+# }
 
-plot_params = {
-    'time_scale': 'h',
-    'power_scale': 'kW',
-    'energy_scale': 'MWh'
-}
+# plot_params = {
+#     'time_scale': 'h',
+#     'power_scale': 'kW',
+#     'energy_scale': 'MWh'
+# }
 
 
     
-time_aggr=np.arange(0,1440,15)
-lp1_aggr=np.random.randint(100,size=np.shape(time_aggr))
-lp2_aggr=np.random.randint(100,size=np.shape(time_aggr))
-lp3_aggr=np.random.randint(100,size=np.shape(time_aggr))
-lp4_aggr=np.random.randint(100,size=np.shape(time_aggr))
-lp5_aggr=np.random.randint(100,size=np.shape(time_aggr))
-lp6_aggr=np.random.randint(100,size=np.shape(time_aggr))
-lp7_aggr=np.random.randint(100,size=np.shape(time_aggr))
-lp8_aggr=np.random.randint(100,size=np.shape(time_aggr))
+# time_aggr=np.arange(0,1440,15)
+# lp1_aggr=np.random.randint(100,size=np.shape(time_aggr))
+# lp2_aggr=np.random.randint(100,size=np.shape(time_aggr))
+# lp3_aggr=np.random.randint(100,size=np.shape(time_aggr))
+# lp4_aggr=np.random.randint(100,size=np.shape(time_aggr))
+# lp5_aggr=np.random.randint(100,size=np.shape(time_aggr))
+# lp6_aggr=np.random.randint(100,size=np.shape(time_aggr))
+# lp7_aggr=np.random.randint(100,size=np.shape(time_aggr))
+# lp8_aggr=np.random.randint(100,size=np.shape(time_aggr))
 
-powers = np.column_stack((lp1_aggr,lp2_aggr))
-plot_specs = {
-    0: ['plot', 'Total'],
-    }
-fig = seasonal_load_profiles(time_aggr,powers,plot_specs,'winter',**params,**fontsizes_dict,**plot_params)
-fig.savefig('eeeh.png')
-
-
-
-
-powers = np.column_stack((lp1_aggr, lp2_aggr, lp3_aggr, lp4_aggr,
-                          lp5_aggr, lp6_aggr, lp7_aggr, lp8_aggr))
-
-plot_specs = {
-    0: ['plot', 'Average'],
-    1: ['bar', 'Min'],
-    2: ['bar', 'Med'],
-    3: ['bar', 'Max']
-    }
-
-fig = seasonal_load_profiles(time_aggr,powers,plot_specs,'winter',**params,**fontsizes_dict,**plot_params)
-fig.savefig('eehehehh.png')
-
-
-energies = np.column_stack((energy_w_tot_class,energy_s_tot_class,energy_p_tot_class,energy_a_tot_class))
-
-fig = seasonal_energy(list(apps_classes.keys()), energies, {'heights': 'Total', 'labels': 'Classes of appliances'})
-fig.savefig('shish.png')
-
-energies = np.sum(energies, axis = 1)
-fig = yearly_energy(list(apps_classes.keys()), energies, {'heights': 'Total', 'labels': 'Classes of appliances'})
-fig.savefig('shush.png')
+# powers = np.column_stack((lp1_aggr,lp2_aggr))
+# plot_specs = {
+#     0: ['plot', 'Total'],
+#     }
+# fig = seasonal_load_profiles(time_aggr,powers,plot_specs,'winter',**params,**fontsizes_dict,**plot_params)
+# fig.savefig('eeeh.png')
 
 
 
-energies = np.column_stack((energy_w_tot_class,energy_s_tot_class,energy_p_tot_class,energy_a_tot_class))
 
-energies_tot = np.sum(energies, axis = 0)
+# powers = np.column_stack((lp1_aggr, lp2_aggr, lp3_aggr, lp4_aggr,
+#                           lp5_aggr, lp6_aggr, lp7_aggr, lp8_aggr))
 
-energies_perc = energies/energies_tot*100
-energies_perc[0,1] = 0
+# plot_specs = {
+#     0: ['plot', 'Average'],
+#     1: ['bar', 'Min'],
+#     2: ['bar', 'Med'],
+#     3: ['bar', 'Max']
+#     }
+
+# fig = seasonal_load_profiles(time_aggr,powers,plot_specs,'winter',**params,**fontsizes_dict,**plot_params)
+# fig.savefig('eehehehh.png')
 
 
-fig = seasonal_energy_pie(apps_classes, energies_perc, {'heights': 'Total', 'labels': 'Classes of appliances'})
-fig.savefig('shaash.png')
+# energies = np.column_stack((energy_w_tot_class,energy_s_tot_class,energy_p_tot_class,energy_a_tot_class))
+
+# fig = seasonal_energy(list(apps_classes.keys()), energies, {'heights': 'Total', 'labels': 'Classes of appliances'})
+# fig.savefig('shish.png')
+
+# energies = np.sum(energies, axis = 1)
+# fig = yearly_energy(list(apps_classes.keys()), energies, {'heights': 'Total', 'labels': 'Classes of appliances'})
+# fig.savefig('shush.png')
+
+
+
+# energies = np.column_stack((energy_w_tot_class,energy_s_tot_class,energy_p_tot_class,energy_a_tot_class))
+
+# energies_tot = np.sum(energies, axis = 0)
+
+# energies_perc = energies/energies_tot*100
+# energies_perc[0,1] = 0
+
+
+# fig = seasonal_energy_pie(apps_classes, energies_perc, {'heights': 'Total', 'labels': 'Classes of appliances'})
+# fig.savefig('shaash.png')
 
 
 
