@@ -147,8 +147,8 @@ def seasonal_load_profiles(time, powers, plot_specs, season, **params):
     
     Inputs:
         time - 1d array, vector of time 
-        powers - 2d array, load profiles to be plotted (columns) for each day-type
-        plot_specs - dict, for each load profile, the type of plot (str, bar plot or plot) and the legend (str)
+        powers - 3d array, different types (axis = 0) of time-load profiles to be plotted (axis = 1) for each day-type (axis = 2)
+        plot_specs - dict, for each type of load profile, the type of plot (str, bar plot or plot) and the legend (str)
         season - str, containing the name of the season
         **params(if not specified, default values are used)
             - 'time_scale': str, 's', 'h'
@@ -223,7 +223,9 @@ def seasonal_load_profiles(time, powers, plot_specs, season, **params):
 
     # Evaluating the number of profiles passed to the function for each day-type 
     # It is given for ganted that only two day-types are considered
-    n_lps =  int(np.size(powers, axis=1)/len(days))
+    n_lps = np.size(powers, axis = 0)
+    
+    # n_lps =  int(np.size(powers, axis=1)/len(days))
     
     ##
     #Running through the day-types (week-day and weekend-day)
@@ -232,19 +234,25 @@ def seasonal_load_profiles(time, powers, plot_specs, season, **params):
         # Number corresponding to the type of day (0: week-day, 1: week-end -day)
         dd = days[day][0] 
     
-        # Index needed for slicing the powers-array, according to the day of the week
-        start = dd*n_lps 
+        # # Index needed for slicing the powers-array, according to the day of the week
+        # start = dd*n_lps 
 
         # Running through the types of load profiles to be plotted for each day-type
         for lp in range(n_lps):
 
             # Selecting the correct power-data to plot and the plot specifications
-            power = powers[:, start + lp]
+            power = powers[lp, :, dd]
             plot_type = plot_specs[lp][0]
             legend = plot_specs[lp][1]
+            
+            
+            
+            # power = powers[:, start + lp]
+            # plot_type = plot_specs[lp][0]
+            # legend = plot_specs[lp][1]
 
             if plot_type == 'plot':
-                ax[dd].plot(time + dt/2, power, color = colors_rgb[lp], linestyle = 's-', label = legend)
+                ax[dd].plot(time + dt/2, power, color = colors_rgb[lp], linestyle = '-', label = legend)
  
             elif plot_type == 'bar':
                 ax[dd].bar(time, power, color = colors_rgb[lp], width = dt, align = 'edge', label = legend)
@@ -431,7 +439,7 @@ def yearly_energy(labels_dict, energies, plot_specs, **params):
     
     Inputs:
         labels_dict - dict, containing for each label (keys) a unique corresponding index (value)
-        energies - 2d array, energy consumption for each appliance/appliance type (axis = 0), by season (axis = 1) 
+        energies - 1d array, energy consumption for each appliance/appliance type (axis = 0) for one year
         plot_specs - dict, for each load profile, the type of plot (str, bar plot or plot) and the legend (str)
         season - str, containing the name of the season
         **params(if not specified, default values are used)
@@ -569,7 +577,7 @@ def yearly_energy(labels_dict, energies, plot_specs, **params):
 # A method for plotting the yearly energy consumption for appliances or classes of appliances (percentage over total)
 # as a pie plot is created.
 
-def seasonal_energy_pie(labels_dict, energies, plot_specs, **params):
+def seasonal_energy_pie(labels_dict, energies, **params):
 
     ''' The method returns a figure-handle where the percentage over the total energy consumption 
     for appliances or class of appliances is plotted, divided by season.
@@ -690,47 +698,47 @@ def seasonal_energy_pie(labels_dict, energies, plot_specs, **params):
 
 
 
-########## Total energy consumption from classes of appliances for season
+# ########## Total energy consumption from classes of appliances for season
 
-# First, the energy consumptions from the various appliances aggregated into
-# energy consumptions from classes of appliances, in order to improve the 
-# readability of the charts. THe class of the various appliances is defined
-# in the apps_ID dictionary.
+# # First, the energy consumptions from the various appliances aggregated into
+# # energy consumptions from classes of appliances, in order to improve the 
+# # readability of the charts. THe class of the various appliances is defined
+# # in the apps_ID dictionary.
 
-es = 1
+# es = 1
 
-energy_w = np.random.randint(100, size = (len(apps_ID),n_hh))
-energy_p = np.random.randint(100, size = (len(apps_ID),n_hh))
-energy_s = np.random.randint(100, size = (len(apps_ID),n_hh))
-energy_a = np.random.randint(100, size = (len(apps_ID),n_hh))
+# energy_w = np.random.randint(100, size = (len(apps_ID),n_hh))
+# energy_p = np.random.randint(100, size = (len(apps_ID),n_hh))
+# energy_s = np.random.randint(100, size = (len(apps_ID),n_hh))
+# energy_a = np.random.randint(100, size = (len(apps_ID),n_hh))
 
-energy_w_tot = np.sum(energy_w,axis=1)*es #adjusted to the energy scale
-energy_p_tot = np.sum(energy_p,axis=1)*es
-energy_s_tot = np.sum(energy_s,axis=1)*es
-energy_a_tot = np.sum(energy_a,axis=1)*es
+# energy_w_tot = np.sum(energy_w,axis=1)*es #adjusted to the energy scale
+# energy_p_tot = np.sum(energy_p,axis=1)*es
+# energy_s_tot = np.sum(energy_s,axis=1)*es
+# energy_a_tot = np.sum(energy_a,axis=1)*es
 
-apps_classes = {}
-ii = 0
-for app in apps_ID:
-    if apps_ID[app][5] not in apps_classes: 
-        apps_classes[apps_ID[app][5]] = (ii , colors_rgb[ii] )
-        ii += 1
+# apps_classes = {}
+# ii = 0
+# for app in apps_ID:
+#     if apps_ID[app][5] not in apps_classes: 
+#         apps_classes[apps_ID[app][5]] = (ii , colors_rgb[ii] )
+#         ii += 1
 
-energy_w_tot_class = np.zeros(len(apps_classes))
-energy_p_tot_class = np.zeros(len(apps_classes))
-energy_s_tot_class = np.zeros(len(apps_classes))
-energy_a_tot_class = np.zeros(len(apps_classes))
+# energy_w_tot_class = np.zeros(len(apps_classes))
+# energy_p_tot_class = np.zeros(len(apps_classes))
+# energy_s_tot_class = np.zeros(len(apps_classes))
+# energy_a_tot_class = np.zeros(len(apps_classes))
 
-for app_class in apps_classes:
+# for app_class in apps_classes:
     
-    apps_list=[]
-    for app in apps_ID:
-        if apps_ID[app][5] == app_class:apps_list.append(apps_ID[app][0])
+#     apps_list=[]
+#     for app in apps_ID:
+#         if apps_ID[app][5] == app_class:apps_list.append(apps_ID[app][0])
     
-    energy_w_tot_class[apps_classes[app_class][0]] = np.sum(energy_w_tot[apps_list])
-    energy_p_tot_class[apps_classes[app_class][0]] = np.sum(energy_p_tot[apps_list])
-    energy_s_tot_class[apps_classes[app_class][0]] = np.sum(energy_s_tot[apps_list])
-    energy_a_tot_class[apps_classes[app_class][0]] = np.sum(energy_a_tot[apps_list]) 
+#     energy_w_tot_class[apps_classes[app_class][0]] = np.sum(energy_w_tot[apps_list])
+#     energy_p_tot_class[apps_classes[app_class][0]] = np.sum(energy_p_tot[apps_list])
+#     energy_s_tot_class[apps_classes[app_class][0]] = np.sum(energy_s_tot[apps_list])
+#     energy_a_tot_class[apps_classes[app_class][0]] = np.sum(energy_a_tot[apps_list]) 
     
 
 

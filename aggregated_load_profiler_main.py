@@ -17,7 +17,7 @@ import parameters_input as inp
 import plot_generator  as plot
 from house_load_profiler import house_load_profiler as hlp
 from load_profile_aggregator import aggregator as agr
-
+from tictoc import tic, toc
 
 ###############################################################################
 
@@ -35,15 +35,16 @@ from load_profile_aggregator import aggregator as agr
 
 
 ###############################################################################
+tic()
 
 # The basepath of the file is stored in a variable 
 basepath = Path(__file__).parent
 
-# An /Output folder is created in order to store the results as .csv files
-dirname = 'Output'
+# # An /Output folder is created in order to store the results as .csv files
+# dirname = 'Output'
 
-try: Path.mkdir(basepath / dirname)
-except Exception: pass 
+# try: Path.mkdir(basepath / dirname)
+# except Exception: pass 
   
 ########## Parameters
 
@@ -218,9 +219,11 @@ nmax = int(np.round(n_hh*quantile_max/100))
 # of them, the load profile during one day for each season, for each day-type.
 n_samp = 5
 samp = random.sample(list(range(0,n_hh)),n_samp) #A random sample is extracted from the total number of households
-sample_lp = np.zeros((time,n_samp*len(seasons)*len(days))) #The load profiles for the houses in the sample are stored in a proper array
-sample_slicingaux = np.arange(n_samp) #This array is useful for properly slicing the households_lp array and storing the load profiles of the households in the random sample
+# sample_lp = np.zeros((time,n_samp*len(seasons)*len(days))) #The load profiles for the houses in the sample are stored in a proper array
+# sample_slicingaux = np.arange(n_samp) #This array is useful for properly slicing the households_lp array and storing the load profiles of the households in the random sample
 sample_lp_header = [] #list where to store the header for the .csv file
+
+
 
 n_days = len(days)
 n_seasons = len(seasons)
@@ -236,10 +239,18 @@ load_profiles_types = {
     }
 n_lps = len(load_profiles_types)
 
-load_profiles_stor = np.zeros((n_seasons, n_time_aggr*n_days, n_lps))
+lp_tot_stor = np.zeros((n_seasons, n_time_aggr, n_days))
+lp_avg_stor = np.zeros((n_seasons, n_time_aggr, n_days))
+lp_max_stor = np.zeros((n_seasons, n_time_aggr, n_days))
+lp_med_stor = np.zeros((n_seasons, n_time_aggr, n_days))
+lp_min_stor = np.zeros((n_seasons, n_time_aggr, n_days))
 energy_stor = np.zeros((n_seasons, n_apps, n_hh))
 
 
+lp_samp_stor = np.zeros((n_samp, n_seasons, len(time_sim), n_days))
+
+
+tic()
 for season in seasons:
 
     season_nickname = seasons[season][1]
@@ -262,12 +273,17 @@ for season in seasons:
         households_lp = np.zeros((time, n_hh)) # 2d-array containing the load profile in time (rows) for each household (columns)
         apps_energy = np.zeros((len(apps_ID), n_hh)) # 2d-array containing the energy consumed in one day by each appliance (rows) for each household (columns)
         
+        tic()
         # The house_load_profiler routine is applied to each household
         for household in range(0,n_hh):
             
             households_lp[:,household], apps_energy[:,household] = hlp(apps_availability[:, household], day_nickname, season_nickname)
             #(W)                      #(Wh/day)
         
+        message = '\nLoad profiles evaluated in: {0:.3f} s ({1},{2}).'.format(toc(), season, day)
+        print(message)
+
+
         ########## Load aggregation and processing of the results
         
         # The load profile is aggregated with a different timestep
@@ -283,107 +299,271 @@ for season in seasons:
         quantile_lp_max = sorted_lp[:, nmax]
 
         # Random sample load profiles
-        sample_lp[:, sample_slicingaux + (ss + dd + ss)*n_samp] = households_lp[:, samp]
+        
+        lp_samp_stor[:, ss, :, dd] = households_lp[:, samp].transpose()
+        # sample_lp[:, sample_slicingaux + (ss + dd + ss)*n_samp] = households_lp[:, samp]
         sample_lp_header += ['{}, {}'.format(season, day)]*n_samp
 
         # Saving load profiles and quantile in a file, for each day for each season
-
-
-        load_profiles_stor[ss, n_time_aggr*dd , :] = np.column_stack((aggregate_lp, average_lp, quantile_lp_max, quantile_lp_med, quantile_lp_min))
-        # seasonal_avg_quant_lps[:, np.arange(4) + dd*4] = np.column_stack((aggregate_lp/n_hh, quantile_lp_max, quantile_lp_med, quantile_lp_min))
-
-
+        lp_tot_stor[ss, :, dd] = aggregate_lp
+        lp_avg_stor[ss, :, dd] = aggregate_lp/n_hh
+        lp_max_stor[ss, :, dd] = quantile_lp_max
+        lp_med_stor[ss, :, dd] = quantile_lp_med
+        lp_min_stor[ss, :, dd] = quantile_lp_min
         
-        ########## Energy consumed by the appliances
-        n_days = days_distr[season][day]
-        energy_stor[ss, :, :] += apps_energy*n_days
 
+        ########## Energy consumed by the appliances
+        n_days_season = days_distr[season][day]
+        energy_stor[ss, :, :] += apps_energy*n_days_season
+
+message = '\nSimulation completed in {0:.3f} s.\n'.format(toc())
+print(message)
+
+
+## Saving the results as .csv files
+dirname = 'Output'
+
+try: Path.mkdir(basepath / dirname)
+except Exception: pass
+
+subdirname = 'Files'
+
+try: Path.mkdir(basepath / dirname / subdirname)
+except Exception: pass
+
+message = '\nThe results are ready and are now being saved in {}/{}.\n'.format(dirname, subdirname)
+print(message)  
+
+subsubdirname = '{}_{}_{}'.format(location, en_class, n_hh)
+
+try: Path.mkdir(basepath / dirname / subdirname / subsubdirname)
+except Exception: pass
+
+tic()
+# Running through the seasons to store the load profiles and energy consumptions as .csv files
+for season in seasons:
+    ss = seasons[season][0]
+
+    for day in days:
+        dd = days[day][0]
+        day_nickname = days[day][1]
+
+        # Saving the total, average, maximum, medium, minimum (i.e. quantile) load profiles in a .csv file
+        filename = '{}_{}_{}_{}_{}_lps_aggr.csv'.format(location, en_class, n_hh, season, day_nickname)
+        fpath = basepath / dirname / subdirname / subsubdirname
+            
+        with open(fpath / filename, mode = 'w', newline = '') as csv_file:
+            csv_writer = csv.writer(csv_file, delimiter = ';', quotechar = "'", quoting = csv.QUOTE_NONNUMERIC)
+            csv_writer.writerow(['Time (min)', 'Total load (W)', 'Average load (W)', 'Maximum load (W)','Medium load (W)','Minimum load (W)'])
+
+            for ii in range(np.size(time_aggr)):
+                csv_writer.writerow([time_aggr[ii], lp_tot_stor[ss, ii, dd], lp_avg_stor[ss, ii, dd], lp_max_stor[ss, ii, dd], lp_med_stor[ss, ii, dd], lp_min_stor[ss, ii, dd]])
+
+
+        # Saving the random sample load profiles in a file, after giving a different time-step
+        filename = '{}_{}_{}_{}_{}_lps_sample.csv'.format(location, en_class, n_hh, season, day_nickname)
+        fpath = basepath / dirname / subdirname / subsubdirname
+
+        with open(fpath / filename, mode = 'w', newline = '') as csv_file:
+            csv_writer = csv.writer(csv_file, delimiter = ';', quotechar = "'", quoting = csv.QUOTE_NONNUMERIC)
+            csv_writer.writerow(sample_lp_header)
+
+            for ii in range(np.size(time_sim)):
+                csv_writer.writerow([time_sim[ii]] + list(lp_samp_stor[:, ss, ii, dd]))
+               
+                # csv_writer.writerow([time_sim[ii]] + list(sample_lp[ii,:]))
+
+
+    # Saving the energy consumed by the appliances in each household, for each season
+    filename = '{}_{}_{}_{}_energy.csv'.format(location, en_class, n_hh, season)
+    fpath = basepath / dirname / subdirname / subsubdirname
+    
+    with open(fpath / filename, mode='w', newline='') as csv_file:
+        csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+        csv_writer.writerow(['App_name', 'App_nickname'] + list(range(0,n_hh)))
+    
+        for app in apps_ID:
+            csv_writer.writerow([app,apps_ID[app][1]]+list(energy_stor[ss, apps_ID[app][0], :]))   
+
+message = 'Results saved in .csv files in {0:.3f}s.\n'.format(toc())
+print(message)
 
 
 
 
 
 ## Post-processing of the results
-# Running through the seasons to store the load profiles and powers as .csv files
-# and calling the methods in plot_generator to create and save figures
-
-dirname = 'Outputs'
+dirname = 'Output'
 subdirname = 'Figures'
 
-try: Path.mkdir(basepath / dirname / subdirname)
-except Exception: pass 
-    
+message = '\nThe results are now being plotted, figures are saved in {}/{}.\n'.format(dirname, subdirname)
+print(message)  
 
+try: Path.mkdir(basepath / dirname / subdirname)
+except Exception: pass
+
+subsubdirname = '{}_{}_{}'.format(location, en_class, n_hh)
+
+try: Path.mkdir(basepath / dirname / subdirname / subsubdirname)
+except Exception: pass
+
+tic()
+# Running through the seasons and calling the methods in plot_generator to create figures to be saved
 for season in seasons:
 
-    ss = seasons[seasons][0]
+    ss = seasons[season][0]
 
     # Total load profiles       
     plot_specs = {
     0: ['bar', 'Total'],
     }
 
-    fig = plot.seasonal_load_profiles(time_aggr, load_profiles_stor[ss, n_time_aggr*dd, 0], plot_specs, season)
+    powers = lp_tot_stor[np.newaxis, ss, :, :]
+                        
+    fig = plot.seasonal_load_profiles(time_aggr, powers, plot_specs, season)
 
-    filename = '{}_{}_{}_{}-aggr_loadprof.png'.format(location, en_class, season, n_hh)
-    fpath = basepath / dirname / subdirname
+    filename = '{}_{}_{}_{}_aggr_loadprof.png'.format(location, en_class, season, n_hh)
+    fpath = basepath / dirname / subdirname / subsubdirname
     
-    fig.savefig(fpath / filename)
+    fig.savefig(fpath / filename) 
+           
+
 
     # Average load profile and quantiles
     plot_specs = {
     0: ['plot', 'Average'],
-    1: ['bar', 'Min'],
+    1: ['bar', 'Max'],
     2: ['bar', 'Med'],
-    3: ['bar', 'Max']
+    3: ['bar', 'Min']
     }
 
-    fig = plot.seasonal_load_profiles(time_aggr, load_profiles_stor[ss, n_time_aggr*dd, 0], plot_specs, season)
+    powers = np.stack((lp_avg_stor[ss, :, :],
+                    lp_max_stor[ss, :, :],
+                    lp_med_stor[ss, :, :],
+                    lp_min_stor[ss, :, :]),
+                    axis = 0)
+
+    fig = plot.seasonal_load_profiles(time_aggr, powers, plot_specs, season)
 
     filename = '{}_{}_{}_{}_avg_quant_loadprof.png'.format(location, en_class, season, n_hh)
-    fpath = basepath / dirname / subdirname
+    fpath = basepath / dirname / subdirname / subsubdirname
     
     fig.savefig(fpath / filename)
 
 
-#     # Saving the energy consumed by the appliances in each household, for each season
-#     filename = 'energy' + '_' + season + '_' + str(n_hh) + '_' + en_class + '_' + location + '.csv'
-#     fpath = basepath / dirname 
+    # Random sample load profiles
+    plot_specs = {}
+    for ii in range(n_samp):
+        plot_specs[ii] = ['plot','Household: {}'.format(samp[ii])]
+
+    powers = lp_samp_stor[:, ss, :, :]
+
+    fig = plot.seasonal_load_profiles(time_sim, powers, plot_specs, season)
+
+    filename = '{}_{}_{}_{}_sample_loadprof.png'.format(location, en_class, season, n_hh)
+    fpath = basepath / dirname / subdirname / subsubdirname
     
-#     with open(fpath / filename, mode='w', newline='') as csv_file:
-#         csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
-#         csv_writer.writerow(['App_name', 'App_nickname'] + list(range(0,n_hh)))
+    fig.savefig(fpath / filename)
+
+
+
+# Total energy by season
+energies = np.transpose(np.sum(energy_stor, axis = 2))
+
+
+plot_specs = {
+    'heights': 'Total',
+    'labels': 'appliances',
+}
+fig = plot.seasonal_energy(apps_ID, energies, plot_specs)
+
+filename = '{}_{}_{}_season_tot_energy_apps.png'.format(location, en_class, n_hh)
+fpath = basepath / dirname / subdirname / subsubdirname
+
+fig.savefig(fpath / filename)
+
+energies = np.sum(energies, axis = 1)
+fig = plot.yearly_energy(apps_ID, energies, plot_specs)
+
+filename = '{}_{}_{}_year_tot_energy_apps.png'.format(location, en_class, n_hh)
+fpath = basepath / dirname / subdirname / subsubdirname
+
+fig.savefig(fpath / filename)
+
+
+
+# Average energy consumption
+plot_specs = {
+    'heights': 'Average',
+    'labels': 'appliances',
+}
+
+energies_nan = np.sum(energy_stor, axis = 0)
+energies_nan[energies_nan == 0] = np.nan
+
+energies = np.nanmean(energies_nan, axis = 1)
+
+fig = plot.yearly_energy(apps_ID, energies, plot_specs)
+
+filename = '{}_{}_{}_year_avg_energy_apps.png'.format(location, en_class, n_hh)
+fpath = basepath / dirname / subdirname / subsubdirname
+
+fig.savefig(fpath / filename)
+
+
+
+
+# Percentage over total energy consumption
+energies_perc = np.transpose(np.sum(energy_stor, axis = 2))
+energies_perc = energies_perc/np.sum(energies_perc)*100
+
+fig = plot.seasonal_energy_pie(apps_ID, energies_perc)
+filename = '{}_{}_{}_season_perc_energy_apps.png'.format(location, en_class, n_hh)
+fpath = basepath / dirname / subdirname / subsubdirname
+
+fig.savefig(fpath / filename)
+
+
+# # The appliances are now divided into classes of appliances, according to the
+# # class specified in apps_ID in the position corresponding to "class" in apps_attr
+# apps_classes = {}
+# ii = 0
+
+
+# for app in apps_ID:
+
+
     
+#     if apps_ID[app][list(apps_attr.keys())[list(apps_attr.values()).index('class')] - 1] not in apps_classes: 
+#         apps_classes[apps_ID[app][list(apps_attr.keys())[list(apps_attr.values()).index('class')] - 1]] = ii
+#         ii += 1
+
+# print(apps_classes)
+
+# energy_class_stor = np.zeros((n_seasons, len(apps_classes), n_hh))
+
+# for season in seasons:
+#     ss = seasons[season][0]
+#     for app_class in apps_classes:
+    
+#         apps_list=[]
 #         for app in apps_ID:
-#             csv_writer.writerow([app,apps_ID[app][1]]+list(energy_season[apps_ID[app][0],:]))   
-
-
-
-#       filename = 'aggr_lp_{}_{}_{}_{}_{}.csv'.format(location, en_class, season, day_nickname, n_hh)
-#         fpath = basepath / dirname 
-        
-#         with open(fpath / filename, mode = 'w', newline = '') as csv_file:
-#             csv_writer = csv.writer(csv_file, delimiter = ';', quotechar = "'", quoting = csv.QUOTE_NONNUMERIC)
-#             csv_writer.writerow(['Time (min)', 'Load profile (W)','Load min (W)','Load med (W)','Load max (W)'])
+#             if apps_ID[app][5] == app_class: apps_list.append(apps_ID[app][0])
     
-#             for ii in range(np.size(time_aggr)):
-#                 csv_writer.writerow([time_aggr[ii], aggregate_lp[ii], quantile_lp_min[ii], quantile_lp_med[ii], quantile_lp_max[ii]])
 
+#     energy_class_stor[ss, apps_classes[app_class], :] = np.sum(energy_stor[ss, apps_list, :], axis = 1)
 
-# # Saving the random sample load profiles in a file, after giving a different time-step
-# filename = 'randomsample_lp' + '_' + str(n_hh) + '_' + en_class + '_' + location + '.csv'
-# fpath = basepath / dirname 
-
-# with open(fpath / filename, mode='w', newline='') as csv_file:
-#     csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
-#     csv_writer.writerow(sample_lp_header)
-
-#     for ii in range(np.size(time_sim)):
-#         csv_writer.writerow([time_sim[ii]] + list(sample_lp[ii,:]))
- 
-
-message = '\nThe results are ready and are now being plotted.\n'
-print(message)   
-
-
+# print(apps_classes)
+# print(energy_class_stor.shape)
     
+
+
+
+
+
+message = 'Results plotted and figures saved in {0:.3f}s.\n'.format(toc())
+print(message)
+
+
+message = '\nEnd.\nTotal time: {0:.3f} .\n'.format(toc())
+print(message)

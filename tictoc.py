@@ -19,5 +19,8 @@ def tic():
 def toc():
     return(time() - _tstart_stack.pop())
 
+# def tot_toc():
+#     return(time() - _tstart_stack[0])
+
 
     
