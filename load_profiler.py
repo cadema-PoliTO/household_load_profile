@@ -42,7 +42,7 @@ for name, val in zip(varname, varval):
     
 ########## Routine
  
-def load_profiler(app,day,season):
+def load_profiler(app, day, season, appliances, energy_classes, season_coefficients):
     
     ''' The method returns a load profile for a given appliance in a total simulation time of 1440 min, with a timestep of 1 min.
     
@@ -61,39 +61,59 @@ def load_profiler(app,day,season):
     
 
     ##########  Loading appliances list and attributes
+
+    apps = appliances['apps']
+    apps_ID = appliances['apps_ID']
+    apps_attr = appliances['apps_attr']
     
-    apps,apps_ID,apps_attr = datareader.read_appliances('eltdome_report.csv',';','Input')
-    # apps is a 2d-array in which, for each appliance (rows) and attribute value is given (columns)
-    # apps_ID is a dictionary in which, for each appliance (key), its ID number,type,week and seasonal behavior (value)
-    # apps_attr is a dictionary in which the name of each attribute (value) is linked to its columns number in apps (key)
+    # apps,apps_ID,apps_attr = datareader.read_appliances('eltdome_report.csv',';','Input')
+    # # apps is a 2d-array in which, for each appliance (rows) and attribute value is given (columns)
+    # # apps_ID is a dictionary in which, for each appliance (key), its ID number,type,week and seasonal behavior (value)
+    # # apps_attr is a dictionary in which the name of each attribute (value) is linked to its columns number in apps (key)
     
-    # Loading nominal yearly energy consumption for each appliance, for each energetic class
+    # # Loading nominal yearly energy consumption for each appliance, for each energetic class
+
+    ec_yearly_energy = energy_classes['ec_yearly_energy']
+    ec_levels_dict = energy_classes['ec_levels_dict']
     
-    ec_yearly_energy,ec_levels_dict = datareader.read_enclasses('classenerg_report.csv',';','Input')
-    # ec_yearly_energy is a 2d-array in which for each appliance, its yearly energy consumption is presented for each energetic class
-    # ec_levels_dict is a dictionary that links each energetic level (value) to its columns number in ec_yearly_energy
+    # ec_yearly_energy,ec_levels_dict = datareader.read_enclasses('classenerg_report.csv',';','Input')
+    # # ec_yearly_energy is a 2d-array in which for each appliance, its yearly energy consumption is presented for each energetic class
+    # # ec_levels_dict is a dictionary that links each energetic level (value) to its columns number in ec_yearly_energy
     
-    # Loading the coefficient matrix, related to how utents use an appliance in a certain season
+    # # Loading the coefficient matrix, related to how utents use an appliance in a certain season
+
+    coeff_matrix = season_coefficients['coeff_matrix']
+    seasons_dict = season_coefficients['seasons_dict']
     
-    coeff_matrix,seasons_dict = datareader.read_enclasses('coeff_matrix.csv',';','Input')
-    # coeff_matrix is a 2d-array in which for each appliance, its coefficient k, related to utent's behavior in different seasons, is presented
-    # seasons_dict is a dictionary that links each season (value) to its columns number in coeff_matrix
+    # coeff_matrix,seasons_dict = datareader.read_enclasses('coeff_matrix.csv',';','Input')
+    # # coeff_matrix is a 2d-array in which for each appliance, its coefficient k, related to utent's behavior in different seasons, is presented
+    # # seasons_dict is a dictionary that links each season (value) to its columns number in coeff_matrix
     
     
     ########## Extracting the correct data for the appliance from the applinces's attributes
+
+    # The ID number of the appliance is stored in a variable since it will be used man times
+    app_ID = apps_ID[app][apps_attr['id_number']]
     
     # T_on: duration of the time period in which an appliance is switched on during a day (min)
-    T_on = apps[apps_ID[app][0], #first index: ID number of the appliance
-                list(apps_attr.keys())[list(apps_attr.values()).index('time_on[min/day]')] #second index: position of the attribute in the dictionary
-                -(len(apps_attr)-np.size(apps,1))] #this is needed because non-numeric attributes are not considered in the matrix apps
+    # T_on = apps[apps_ID[app][0], #first index: ID number of the appliance
+    #             list(apps_attr.keys())[list(apps_attr.values()).index('time_on[min/day]')] #second index: position of the attribute in the dictionary
+    #             -(len(apps_attr)-np.size(apps,1))] #this is needed because non-numeric attributes are not considered in the matrix apps
+
+    T_on = apps[app_ID, apps_attr['time_on'] - (len(apps_attr) - np.size(apps, 1))]
     
     # energy: yearly energy consumption (kWh/year)
-    energy = ec_yearly_energy[apps_ID[app][0], #first index: ID number of the appliance
-                list(ec_levels_dict.keys())[list(ec_levels_dict.values()).index(en_class)]] #second index: number corresponding to the energy class in dictionary
+    # energy = ec_yearly_energy[apps_ID[app][0], #first index: ID number of the appliance
+    #             list(ec_levels_dict.keys())[list(ec_levels_dict.values()).index(en_class)]] #second index: number corresponding to the energy class in dictionary
+
+    energy = ec_yearly_energy[app_ID, ec_levels_dict[en_class]]
     
-    # kk: utent's seasonal behavior coefficient (-)
-    kk = coeff_matrix[apps_ID[app][0], #first index: ID number of the appliance
-                list(seasons_dict.keys())[list(seasons_dict.values()).index(season)]] #second index: number corresponding to the energy class in dictionary
+    # kk: user's seasonal behavior coefficient (-)
+    # kk = coeff_matrix[apps_ID[app][0], #first index: ID number of the appliance
+    #             list(seasons_dict.keys())[list(seasons_dict.values()).index(season)]] #second index: number corresponding to the energy class in dictionary
+
+    kk = coeff_matrix[app_ID, seasons_dict[season]]
+
     
     # k_ftg: coefficient that adapts the consumption from ac and lux 
     # ("continuous" type appliances) to the actual footage of the household
@@ -265,30 +285,50 @@ def load_profiler(app,day,season):
 
 
 # # ##### Uncomment the following lines to test the function (comment def and return)
-# # app = 'vacuum_cleaner'
+# app = 'vacuum_cleaner'
 # app = 'air_conditioner'
-# # app = 'electric_oven'
-# # app = 'microwave_oven'
-# # app = 'fridge'
-# # app = 'freezer'
-# # app = 'washing_machine'
-# # app = 'dish_washer'
-# # app = 'tumble_drier'
-# # app = 'electric_boiler'
-# # app = 'hifi_stereo'
-# # app = 'dvd_reader'
-# # app = 'tv'
-# # app = 'iron'
-# # app = 'pc'
-# # app = 'laptop'
-# # app = 'lighting'
+# app = 'electric_oven'
+# app = 'microwave_oven'
+# app = 'fridge'
+# app = 'freezer'
+# app = 'washing_machine'
+# app = 'dish_washer'
+# app = 'tumble_drier'
+# app = 'electric_boiler'
+# app = 'hifi_stereo'
+# app = 'dvd_reader'
+# app = 'tv'
+# app = 'iron'
+# app = 'pc'
+# app = 'laptop'
+# app = 'lighting'
 
 # day = 'we'
 # season = 's'
 
+# apps, apps_ID, apps_attr = datareader.read_appliances('eltdome_report.csv',';','Input')
+# appliances = {
+#     'apps': apps,
+#     'apps_ID': apps_ID,
+#     'apps_attr': apps_attr,
+#     }
+
+# ec_yearly_energy, ec_levels_dict = datareader.read_enclasses('classenerg_report.csv',';','Input')
+# energy_classes = {
+#     'ec_yearly_energy': ec_yearly_energy,
+#     'ec_levels_dict': ec_levels_dict,
+#     }
+
+# coeff_matrix, seasons_dict = datareader.read_enclasses('coeff_matrix.csv',';','Input')
+# season_coefficients = {
+#     'coeff_matrix': coeff_matrix,
+#     'seasons_dict': seasons_dict,
+#     }
+
 # dt = 1 
 # time = 1440 
 # time_lp = np.arange(0,time,dt)
-# load_profile=load_profiler(app,day,season)
+# load_profile=load_profiler(app,day,season,appliances, energy_classes, season_coefficients)
 # # plt.bar(time_lp,load_profile,width=time_lp[-1]/np.size(time_lp))
 # plt.plot(time_lp,load_profile)
+# plt.show()

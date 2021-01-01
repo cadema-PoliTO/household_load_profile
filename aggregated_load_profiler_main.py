@@ -159,6 +159,24 @@ apps,apps_ID,apps_attr = datareader.read_appliances('eltdome_report.csv',';','In
 # apps_ID is a dictionary in which, for each appliance (key), its ID number,type,week and seasonal behavior (value)
 # apps_attr is a dictionary in which the name of each attribute (value) is linked to its columns number in apps (key)
 
+appliances = {
+    'apps': apps,
+    'apps_ID': apps_ID,
+    'apps_attr': apps_attr,
+    }
+
+ec_yearly_energy, ec_levels_dict = datareader.read_enclasses('classenerg_report.csv',';','Input')
+energy_classes = {
+    'ec_yearly_energy': ec_yearly_energy,
+    'ec_levels_dict': ec_levels_dict,
+    }
+
+coeff_matrix, seasons_dict = datareader.read_enclasses('coeff_matrix.csv',';','Input')
+season_coefficients = {
+    'coeff_matrix': coeff_matrix,
+    'seasons_dict': seasons_dict,
+    }
+
 
 ########## Building the appliances availability matrix
 
@@ -277,7 +295,7 @@ for season in seasons:
         # The house_load_profiler routine is applied to each household
         for household in range(0,n_hh):
             
-            households_lp[:,household], apps_energy[:,household] = hlp(apps_availability[:, household], day_nickname, season_nickname)
+            households_lp[:,household], apps_energy[:,household] = hlp(apps_availability[:, household], day_nickname, season_nickname, appliances, energy_classes, season_coefficients)
             #(W)                      #(Wh/day)
         
         message = '\nLoad profiles evaluated in: {0:.3f} s ({1},{2}).'.format(toc(), season, day)

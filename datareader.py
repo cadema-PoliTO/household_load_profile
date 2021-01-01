@@ -117,7 +117,7 @@ def read_general(filename,delimit,dirname):
 
 ##############################################################################
 
-def read_appliances(filename,delimit,dirname):
+def read_appliances(filename, delimit, dirname):
     
     ''' The function reads from a .csv file that contains all the appliances
     
@@ -139,41 +139,53 @@ def read_appliances(filename,delimit,dirname):
     
     fpath = basepath / dirname  
     
-    app_list = [] #list containing, for each appliance,its attributes 
-    app_ID = {} #dictionary relating each appliance to an identification number, nickname and type
+    # Initializing a list that contains, for each appliance, the numerical values of its attributes 
+    apps_list = [] 
+
+    # Initializing a dictionary that contains, for each appliance, its ID number, nickname, type, weekly and seasonal behaviour and class
+    apps_ID = {} 
     
     # Reading the CSV file
     with open(fpath / filename, mode='r') as csv_file:
-        csv_reader = csv.reader(csv_file,delimiter=delimit)
-        line_count = 0
+        csv_reader = csv.reader(csv_file, delimiter=delimit)
+        
+        # Initializing a flag (header_row) that is used to properly treat the header
+        header_row = 1
         for row in csv_reader:
-            if line_count == 0:
+            if header_row == 1:
                 header = row
-                line_count += 1
+
+                # Skipping the second row, that contains the units of measure of the attributes
+                next(csv_reader)
+
+                header_row = 0
                 continue
             
             else:
-                app_list.append(row[7:])
-                app_ID[row[1].lower()]=(int(row[0]),row[2],row[3],row[4].split(','),row[5].split(','),row[6])
+
+                # Storing only the numeircal values in app_list
+                apps_list.append(row[7:])
+
+                # Storing the non-numerical values (ID, nickname and so on) in app_ID
+                apps_ID[row[1].lower().replace(' ', ';')] = (int(row[0]), row[2], row[3], row[4].split(','), row[5].split(','), row[6])
             
-            line_count += 1
+            
+    # Creating a dictionary that contains the appliances' attributes
+    apps_attributes = {}
     
-    # Creating a dictionary for attributes
-    app_attributes = {}
     ii = 0
-    
     for attr in header:
-        app_attributes[int(ii)] = attr.lower()
+        apps_attributes[attr.lower().replace(' ', '_')] = ii
         ii += 1
     
     # Creating a 2D-array containing appliances and attributes
-    app = np.array(app_list,dtype='float')
-    return(app,app_ID,app_attributes)
+    apps = np.array(apps_list, dtype = 'float')
+    return(apps, apps_ID, apps_attributes)
 
 
 ##############################################################################
 
-def read_enclasses(filename,delimit,dirname):
+def read_enclasses(filename, delimit, dirname):
     
     ''' The function reads from a .csv file that contains, for each appliance, its yearly energy consumption (kWh/year) for every energetic class
     
@@ -187,7 +199,7 @@ def read_enclasses(filename,delimit,dirname):
         enclass_levels - dictionary containing for each energetic class (columns in app) its level 
     '''
     
-    apps_ID,apps_attributes = read_appliances('eltdome_report' , ';' , 'Input')[1:]
+    apps_ID = read_appliances('eltdome_report', ';', 'Input')[1]
     
     dirname = dirname.strip()
   
@@ -196,45 +208,57 @@ def read_enclasses(filename,delimit,dirname):
     
     fpath = basepath / dirname  
     
-    enclass_list = [] #list containing, for each appliance,its nominal energy consumption 
+     # Initializing a dictionary that contains, for each appliance, its nominal yearly energy consumption for all energy classes
+    enclass_dict = {}
         
     # Reading the CSV file
-    with open(fpath / filename, mode='r') as csv_file:
-        csv_reader = csv.reader(csv_file,delimiter=delimit)
-        line_count = 0
+    with open(fpath / filename, mode = 'r') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter = delimit)
+    
+        # Initializing a flag (header_row) that is used to properly treat the header
+        header_row = 1
         for row in csv_reader:
-            if line_count == 0:
-                columns=row
-                line_count += 1
+            if header_row == 1:
+                header = row
+
+                # Skipping the second row, that contains the units of measure of the attributes
+                next(csv_reader)
+
+                header_row = 0
                 continue
             
             else:
-                enclass_list.append([row[1].lower()]+(row[2:]))
+                # Storing the yearly energy consumption for each energy class (values), for each appliance (keys)
+                enclass_dict[row[0].lower().replace(' ', ';')] = row[1:]
                             
-            line_count += 1
-    
-    enclass_ordered = [[-1]*len(enclass_list[0][2:])]*len(apps_ID)
-    
-    for item in enclass_list:
-        app=item[0]
-        enclass_ordered[apps_ID[app][0]]=item[2:]
-    
     # Creating a dictionary for energetic classes' levels
     enclass_levels = {}
+    
     ii = 0
-    
-    for attr in columns[3:]:
-        enclass_levels[int(ii)] = attr
+    for attr in header[1:]:
+        enclass_levels[attr] = ii
         ii += 1
+
+    # Number of energetic classes (needed in the next step)
+    enclass_n = len(enclass_levels)
+
+    # A list is initialized, where the yearly energy consumptions for each appliance can be stored,
+    # after being sorted is the same order as apps_ID (values are initialized to -1, so that exceptions will 
+    # occur later on, if an appliance is present in apps_ID but not in the enclass_dict)
+    enclass_sorted = [[-1]*enclass_n]*len(apps_ID)
     
+    for app in enclass_dict:
+        enclass_sorted[apps_ID[app][0]] = enclass_dict[app]
+    
+   
     # Creating a 2D-array containing appliances and nominal energy consumptions
-    enclass_en = np.array(enclass_ordered,dtype='float') 
-    return(enclass_en,enclass_levels)
+    enclass_en = np.array(enclass_sorted, dtype='float') 
+    return(enclass_en, enclass_levels)
 
 
 ##############################################################################
 
-def read_energy(filename,delimit,dirname):
+def read_energy(filename, delimit, dirname):
     
     ''' The function reads from a .csv file that contains, for each appliance, its yearly energy consumption (kWh/year) for every household.
     
@@ -257,8 +281,8 @@ def read_energy(filename,delimit,dirname):
     energy_list = [] #list containing, for each appliance,its nominal energy consumption 
         
     # Reading the CSV file
-    with open(fpath / filename, mode='r') as csv_file:
-        csv_reader = csv.reader(csv_file,delimiter=delimit)
+    with open(fpath / filename, mode = 'r') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter = delimit)
         line_count = 0
         for row in csv_reader:
             if line_count == 0:
@@ -278,3 +302,19 @@ def read_energy(filename,delimit,dirname):
 ##############################################################################
 
 
+
+# apps, apps_ID, apps_attributes = read_appliances('eltdome_report', ';', 'Input')
+
+# print(apps)
+# print(apps_ID)
+# print(apps_attributes)
+
+# en_class, en_class_levels = read_enclasses('classenerg_report', ';', 'Input')
+
+# print(en_class)
+# print(en_class_levels)
+
+# coeff_matrix, seasons_dict = read_enclasses('coeff_matrix', ';', 'Input')
+
+# print(coeff_matrix)
+# print(seasons_dict)

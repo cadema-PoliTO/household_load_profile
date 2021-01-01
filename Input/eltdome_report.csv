@@ -1,4 +1,5 @@
-ID Number;Name;Nickname;Type;Week behavior;Season behavior;Class;Distribution_North[-];Distribution_Centre[-];Distribution_South[-];Average_power[W];Time_on[min/day];Number_of_cycles_weekday[-];Number_of_cycles_weekend[-];Instant_peak1_weekday[min];Instant_peak2_weekday[min];Instant_peak3_weekday[min];Instant_peak1_weekend[min];Instant_peak2_weekend[min];Instant_peak3_weekend[min]
+ID Number;Name;Nickname;Type;Week behavior;Season behavior;Class;Distribution North;Distribution Centre;Distribution South;Average power;Time on;Number of cycles weekday;Number of cycles weekend day;Instant peak 1 weekday;Instant peak 2 weekday;Instant peak 3 weekday;Instant peak 1 weekend day;Instant peak 2 weekend day;Instant peak 3 weekend day
+(/);(/);(/);(/);(/);(/);(/);(-);(-);(-);(min);(min/day);(-);(-);(min);(min);(min);(min);(min);(min)
 0;Air_conditioner;ac;continuous;wde;sawp;ac_machine;0.32;0.25;0.32;2000;144;2;2;350;1050;0;350;1050;0
 1;Lighting;lux;continuous;wde;s,w,p;light;1;1;1;1;0;2;2;0;0;0;0;0;0
 2;Fridge;frg;no_duty_cycle;wde;sawp;refrigerating;1;1;1;150;1440;0;0;0;0;0;0;0;0

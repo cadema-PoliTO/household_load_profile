@@ -8,7 +8,6 @@ Created on Wed Oct 28 18:37:58 2020
 # from tictoc import tic, toc
 
 import numpy as np
-# import matplotlib.pyplot as plt
 
 import datareader #routine created to properly read the files needed in the following 
 from load_profiler import load_profiler as lp
@@ -42,7 +41,7 @@ for name, val in zip(varname, varval):
 
 ########## Routine
 
-def house_load_profiler(apps_availability,day,season):
+def house_load_profiler(apps_availability, day, season, appliances, energy_classes, season_coefficients):
     
     ''' The method returns a load profile for a given household in a total simulation time of 1440 min, with a timestep of 1 min.
     
@@ -60,10 +59,14 @@ def house_load_profiler(apps_availability,day,season):
     
     ##########  Loading appliances list and attributes
     
-    apps,apps_ID,apps_attr = datareader.read_appliances('eltdome_report.csv',';','Input')
+    # apps,apps_ID,apps_attr = datareader.read_appliances('eltdome_report.csv',';','Input')
     # apps is a 2d-array in which, for each appliance (rows) and attribute value is given (columns)
     # apps_ID is a dictionary in which, for each appliance (key), its ID number,type,week and seasonal behavior (value)
     # apps_attr is a dictionary in which the name of each attribute (value) is linked to its columns number in apps (key)
+
+    apps = appliances['apps']
+    apps_ID = appliances['apps_ID']
+    apps_attr = appliances['apps_attr']
 
     
     ########## Time discretization
@@ -84,7 +87,7 @@ def house_load_profiler(apps_availability,day,season):
         if apps_availability[apps_ID[app][0]] == 0:
             continue
         
-        load_profile = lp(app,day,season) #load_profile has to outputs (time and power)
+        load_profile = lp(app, day, season, appliances, energy_classes, season_coefficients) #load_profile has to outputs (time and power)
         
         # In case the instantaneous power exceedes the maximum power, some tries
         # are made in order to change the moment in which the next appliance is
@@ -95,7 +98,7 @@ def house_load_profiler(apps_availability,day,season):
         
         while np.max(house_load_profile[:] + load_profile) > power_max and count < maxtries:
         
-            load_profile = lp(app,day,season)
+            load_profile = lp(app, day, season, appliances, energy_classes, season_coefficients)
             count += 1
         
         # The energy consumption from each appliance is evaluated by integrating
@@ -117,13 +120,36 @@ def house_load_profiler(apps_availability,day,season):
     return(house_load_profile,energy)
 
 # # Uncomment the following lines to test the function
+# import matplotlib.pyplot as plt
+
 # apps_availability = np.ones(17)
 # day = 'wd'
 # season = 's'
 # dt = 1
 # time = 1440
 # time_sim = np.arange(0,time,dt)
-# house_load_profile,energy = house_load_profiler(apps_availability,day,season)
-# plt.bar(time_sim,house_load_profile,width=dt,align='edge')
+
+
+# apps, apps_ID, apps_attr = datareader.read_appliances('eltdome_report.csv',';','Input')
+# appliances = {
+#     'apps': apps,
+#     'apps_ID': apps_ID,
+#     'apps_attr': apps_attr,
+#     }
+
+# ec_yearly_energy, ec_levels_dict = datareader.read_enclasses('classenerg_report.csv',';','Input')
+# energy_classes = {
+#     'ec_yearly_energy': ec_yearly_energy,
+#     'ec_levels_dict': ec_levels_dict,
+#     }
+
+# coeff_matrix, seasons_dict = datareader.read_enclasses('coeff_matrix.csv',';','Input')
+# season_coefficients = {
+#     'coeff_matrix': coeff_matrix,
+#     'seasons_dict': seasons_dict,
+#     }
         
-    
+# house_load_profile,energy = house_load_profiler(apps_availability, day, season, appliances, energy_classes, season_coefficients)
+# plt.bar(time_sim,house_load_profile,width=dt,align='edge')
+
+# plt.show()
