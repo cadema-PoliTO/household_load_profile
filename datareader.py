@@ -175,6 +175,8 @@ def read_appliances(filename, delimit, dirname):
     
     ii = 0
     for attr in header:
+
+        if attr.lower().replace(' ',';') == 'name': continue
         apps_attributes[attr.lower().replace(' ', '_')] = ii
         ii += 1
     

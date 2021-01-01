@@ -23,91 +23,89 @@ from load_profiler import load_profiler as lp
 
 ###############################################################################
 
-########## Input parameters
-
-# en_class = 'A+'
-# toll = 15
-# devsta = 2
-# ftg_avg = 100
-# power_max = 3000 #[W]
-
-
-########## Parameters update to user's input
-
-varname, varval = datareader.read_param('sim_param.csv',';','Parameters')
-
-for name, val in zip(varname, varval):
-    vars()[name] = val
-
 ########## Routine
 
-def house_load_profiler(apps_availability, day, season, appliances, energy_classes, season_coefficients):
+def house_load_profiler(apps_availability, day, season, appliances_data, **params):
     
     ''' The method returns a load profile for a given household in a total simulation time of 1440 min, with a timestep of 1 min.
     
     Inputs:
-        apps_availability - 1d-array in which the availability of each appliance for the household is stored (1 if present, 0 if not)
-        day - type of day (weekday:'wd'|weekend:'we')
-        season - season (summer:'s',winter:'w',autumn or spring:'ap')
+        apps_availability - 1d-array, availability of each appliance for the household is stored (1 if present, 0 if not)
+        day - str, type of day (weekday: 'wd'| weekend: 'we')
+        season - str, season (summer: 's', winter: 'w', autumn or spring: 'ap')
+        appliances_data - dict, various input data related to the appliances
+        params - dict, simulation parameters
         
     Outputs:
-        house_load_profile - load profile for the household (W)
-        energy - energy consumed by each appliance in 24h (Wh/day)
+        house_load_profile - 1d-array, load profile for the household (W)
+        energy - 1d-array, energy consumed by each appliance in one day (Wh/day)
         
     '''
+
+    ## Time 
+    # Time discretization for the simulation    
+
+    # Time-step, total time and vector of time from 00:00 to 23:59 (one day) (min)
+    dt = 1 
+    time = 1440 
+    time_sim = np.arange(0,time,dt) 
+
     
-    
-    ##########  Loading appliances list and attributes
-    
-    # apps,apps_ID,apps_attr = datareader.read_appliances('eltdome_report.csv',';','Input')
+    ## Parameters
+    # Simulation parameters that can be changed from the user
+
+    # Energy label of the appliances
+    power_max = params['power_max']
+
+   
+    ## Input data for the appliances
+    # Appliances' attributes, energy consumptions and user's coefficients 
+
     # apps is a 2d-array in which, for each appliance (rows) and attribute value is given (columns)
-    # apps_ID is a dictionary in which, for each appliance (key), its ID number,type,week and seasonal behavior (value)
+    apps_ID = appliances_data['apps_ID']
+
     # apps_attr is a dictionary in which the name of each attribute (value) is linked to its columns number in apps (key)
+    apps_attr = appliances_data['apps_attr']
 
-    apps = appliances['apps']
-    apps_ID = appliances['apps_ID']
-    apps_attr = appliances['apps_attr']
 
-    
-    ########## Time discretization
+    ## Household's load profile
+    # Generating the load profile for the house, considering which appliances are available
 
-    dt = 1 #timestep for the simulation (min)
-    time = 1440 #total simulation time (min)
-    time_sim = np.arange(0,time,dt) #vector of simulation time with the given time-resolution (min
+    # Initializing the power vector for the load profile (W)
+    house_load_profile = np.zeros(np.shape(time_sim)) 
+
+    # Initializing the vector where to store the energy consumption from each appliance (Wh/day)
+    energy = np.zeros(len(apps_ID)) 
     
-    
-    ########## Generating the load profile for the house, considering all the appliances
-    house_load_profile = np.zeros(np.shape(time_sim)) #load profile in time (W)
-    energy = np.zeros(len(apps_ID)) #energy consumed in 24h by each appliance
-    
-    # The load_profiler method (lp) is used in order to get the load profile for
-    # each appliance    
-    for app in apps_ID:        
+    # Using the method load_profiler(lp) to get the load profile for each appliance    
+    for app in apps_ID:  
+
+        # The ID number of the appliance is stored in a variable since it will be used man times
+        app_ID = apps_ID[app][apps_attr['id_number']]     
         
-        if apps_availability[apps_ID[app][0]] == 0:
+        # Skipping appliances that are not present in the household
+        if apps_availability[app_ID] == 0:
             continue
         
-        load_profile = lp(app, day, season, appliances, energy_classes, season_coefficients) #load_profile has to outputs (time and power)
+        load_profile = lp(app, day, season, appliances_data, **params) #load_profile has to outputs (time and power)
         
         # In case the instantaneous power exceedes the maximum power, some tries
         # are made in order to change the moment in which the next appliance is
-        #  switched on (since it is evaluated randomly, according to the cumulative
-        #  frequency of utilization for that appliance)
+        # switched on (since it is evaluated randomly, according to the cumulative
+        # frequency of utilization for that appliance)
         count = 0
         maxtries = 10
         
         while np.max(house_load_profile[:] + load_profile) > power_max and count < maxtries:
-        
-            load_profile = lp(app, day, season, appliances, energy_classes, season_coefficients)
+            load_profile = lp(app, day, season, appliances_data, **params)
             count += 1
         
-        # The energy consumption from each appliance is evaluated by integrating
+        # Evaluating the energy consumption from each appliance by integrating
         # the load profile over the time. Since the time is in minutes, the
         # result is divided by 60 in order to obtain Wh.
-        energy[apps_ID[app][0]] = np.trapz(load_profile,time_sim)/60
+        energy[app_ID] = np.trapz(load_profile,time_sim)/60
         
-        # The power demand from each appliance is injected into the load profile
-        # of the house
+        # Injecting the power demand from each appliance into the load profile of the household
         house_load_profile[:] = house_load_profile[:] + load_profile
         
         
@@ -119,8 +117,10 @@ def house_load_profiler(apps_availability, day, season, appliances, energy_class
     
     return(house_load_profile,energy)
 
+
 # # Uncomment the following lines to test the function
 # import matplotlib.pyplot as plt
+# from tictoc import tic, toc
 
 # apps_availability = np.ones(17)
 # day = 'wd'
@@ -131,25 +131,30 @@ def house_load_profiler(apps_availability, day, season, appliances, energy_class
 
 
 # apps, apps_ID, apps_attr = datareader.read_appliances('eltdome_report.csv',';','Input')
-# appliances = {
+# ec_yearly_energy, ec_levels_dict = datareader.read_enclasses('classenerg_report.csv',';','Input')
+# coeff_matrix, seasons_dict = datareader.read_enclasses('coeff_matrix.csv',';','Input')
+
+# appliances_data = {
 #     'apps': apps,
 #     'apps_ID': apps_ID,
 #     'apps_attr': apps_attr,
-#     }
-
-# ec_yearly_energy, ec_levels_dict = datareader.read_enclasses('classenerg_report.csv',';','Input')
-# energy_classes = {
 #     'ec_yearly_energy': ec_yearly_energy,
 #     'ec_levels_dict': ec_levels_dict,
-#     }
-
-# coeff_matrix, seasons_dict = datareader.read_enclasses('coeff_matrix.csv',';','Input')
-# season_coefficients = {
 #     'coeff_matrix': coeff_matrix,
 #     'seasons_dict': seasons_dict,
 #     }
+
+# params = {
+#     'power_max': 3000,
+#     'en_class': 'A',
+#     'toll': 15,
+#     'devsta': 2,
+#     'ftg_avg': 100
+#     }
         
-# house_load_profile,energy = house_load_profiler(apps_availability, day, season, appliances, energy_classes, season_coefficients)
+# tic()
+# house_load_profile,energy = house_load_profiler(apps_availability, day, season, appliances_data, params)
+# print(toc())
 # plt.bar(time_sim,house_load_profile,width=dt,align='edge')
 
 # plt.show()
