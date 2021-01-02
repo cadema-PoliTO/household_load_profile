@@ -24,12 +24,17 @@ basepath = Path(__file__).parent
 
 
 ##############################################################################
+# if True:
+
+#     dirname = 'Input'
+#     filename = 'parameters'
+#     delimit = ';'
 
 def read_param(filename,delimit,dirname):
     
-    ''' The function reads from a .csv file in which some paramters are saved. 
-    The file has the parameter's name in the first column, its unit of measure 
-    in the second one and its value in the third one.
+    ''' The function reads from a .csv file in which some parameters are saved. 
+    The file has the parameter's name in the first column, its value 
+    in the second one and its unit of measure (uom) in the third one.
         
     Inputs:
         filname - string containing the name of the file (extension of the file: .dat)
@@ -37,8 +42,8 @@ def read_param(filename,delimit,dirname):
         dirname - name of the folder where to find the file to be opened and read
         
     Outputs:
-        varname_list - list of the names of the variebles that are in the file
-        varval_list - list of the values of the variables that are in the file
+        params - dict, containing the parameters (keys) and their values, as entered by 
+                 by the user and stored in the .csv file        
     '''
     
     dirname = dirname.strip()
@@ -48,31 +53,46 @@ def read_param(filename,delimit,dirname):
     
     fpath = basepath / dirname 
     
-    varname_list = []
-    varval_list = []
+    params = {}
     
     try:
         with open(fpath / filename, mode='r') as csv_file:
             csv_reader = csv.reader(csv_file,delimiter=delimit,quotechar="'")
-            next(csv_reader, None) 
             
+            header_row = 1
             for row in csv_reader:
-                varname_list.append(row[0])
-                
-                try: row[2] = int(row[2])
-                except: 
-                    try: row[2] = float(row[2])
-                    except: row[2] = row[2]
+
+                if header_row == 1:
+
+                    for ii in range(len(row)): row[ii] = row[ii].lower().strip().replace(' ', '_')
+                    header = {
+                        'name': row.index('name'),
+                        'value': row.index('value'),
+                    }
+
+                    header_row = 0
+                    continue
+
+                else:
+
+                    param_name = row[header['name']]
+                    param_val = row[header['value']]
                     
-                varval_list.append(row[2])
-                
+                    try: 
+                        param_val = int(param_val)
+                    except: 
+                        try: param_val = float(param_val)
+                        except: param_val = param_val
+                        
+                    params[param_name] = param_val
+                          
     except:
-        
         print('Unable to open this file')
-     
-    return(varname_list,varval_list)
+    
+    print('Im returning params: {}'.format(params))
+    return(params)
 
-
+ 
 ##############################################################################
     
 def read_general(filename,delimit,dirname):

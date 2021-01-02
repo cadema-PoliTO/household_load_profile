@@ -8,6 +8,7 @@ Created on Tue Nov 10 16:09:48 2020
 from pathlib import Path
 import csv
 import datareader
+from levenshtein_distance import Leven_dist_comparison
 
 ##############################################################################
 
@@ -23,347 +24,193 @@ import datareader
 basepath = Path(__file__).parent
 
 # A /Parameters folder is created in order to store the parameters as .csv files
-dirname = 'Parameters'
+dirname = 'Input'
 
 try: Path.mkdir(basepath / dirname)
 except Exception: pass 
 
 
-########## Parameters
+# ########## Parameters
 
-# Simulation parameters that can be changed
-n_hh = 100 #number of households (-)
-n_people_avg = 2.7 #average number of members for each household (-)
-ftg_avg = 100  #average footage of each household (m2)
-location = 'north' #geographical location: 'north' | 'centre' | 'south'
-power_max = 3000 #maximum power available from the grid (contractual power) (W)
-en_class = 'A+' #energetic class of the appiances: 'A+++' | 'A++' | 'A+' | 'A' | 'B' | 'C' | 'D'
+# # Simulation parameters that can be changed
+# n_hh = 100 #number of households (-)
+# n_people_avg = 2.7 #average number of members for each household (-)
+# ftg_avg = 100  #average footage of each household (m2)
+# location = 'north' #geographical location: 'north' | 'centre' | 'south'
+# power_max = 3000 #maximum power available from the grid (contractual power) (W)
+# en_class = 'A+' #energetic class of the appiances: 'A+++' | 'A++' | 'A+' | 'A' | 'B' | 'C' | 'D'
 
-# For appliances which don't have a duty-cycle and do not belong to "continuous"
-# type, the time in which they are siwtched on during 24h (T_on) is modified
-# exctracting a random duration from a normal distribution (centred in T_on, with
-# standard deviation equal to devsta), in a range defined by toll
-toll = 15 #tollerance on total time in which the appliance is on (%); default value: 15%
-devsta = 2 #standard deviation on total time in which the appliance is on (min); default value: 2 min
+# # For appliances which don't have a duty-cycle and do not belong to "continuous"
+# # type, the time in which they are siwtched on during 24h (T_on) is modified
+# # exctracting a random duration from a normal distribution (centred in T_on, with
+# # standard deviation equal to devsta), in a range defined by toll
+# toll = 15 #tollerance on total time in which the appliance is on (%); default value: 15%
+# devsta = 2 #standard deviation on total time in which the appliance is on (min); default value: 2 min
 
-# Aggregation parameters that can be changed
-dt_aggr = 15 #aggregated data timestep (min) 1 | 5 | 10 | 15 | 10 | 30 | 45 | 60
-quantile_min, quantile_med, quantile_max = 15,50,85 #quantils for the evaluation of minimum, medium and maximux power demands for the load profiles
-quantile_curr = [quantile_min, quantile_med, quantile_max]
+# # Aggregation parameters that can be changed
+# dt_aggr = 15 #aggregated data timestep (min) 1 | 5 | 10 | 15 | 10 | 30 | 45 | 60
+# quantile_min, quantile_med, quantile_max = 15,50,85 #quantils for the evaluation of minimum, medium and maximux power demands for the load profiles
+# quantile_curr = [quantile_min, quantile_med, quantile_max]
 
-# Plotting parameters that can be changed
-time_scale = 'min' #time-scale for plotting: 'min' | 'h' 
-power_scale = 'W' #power_scale for plotting: 'W' | 'kW'
-energy_scale = 'Wh' #energy_scale for plotting: 'Wh' | 'kWh' | 'MWh' 
-
-
-########### Parameters update 
-
-# Simulation parameters
-varname, varval = datareader.read_param('sim_param.csv',';','Parameters')
-for name, val in zip(varname, varval):
-    vars()[name] = val
-    
-# Aggregation parameters
-varname, varval = datareader.read_param('aggr_param.csv',';','Parameters')
-for name, val in zip(varname, varval):
-    vars()[name] = val
-    
-# Plotting parameters
-varname, varval = datareader.read_param('plot_param.csv',';','Parameters')
-for name, val in zip(varname, varval):
-    vars()[name] = val
+# # Plotting parameters that can be changed
+# time_scale = 'min' #time-scale for plotting: 'min' | 'h' 
+# power_scale = 'W' #power_scale for plotting: 'W' | 'kW'
+# energy_scale = 'Wh' #energy_scale for plotting: 'Wh' | 'kWh' | 'MWh' 
 
 
-########### Parameters update to user's input
+## Creating a method to change the parameters entering their values from keyboard
+# All the parameters that can be changed are declared as keys of param_dict, while
+# the value for each key contains the type (int, float, str) of the parameter, its
+# defualt value and its boundaries/possible values and its unit of measure (the latter
+# is just to be written in the .csv file where the parameters will be saved).
+# The current values of the parameters are read from a .csv file that has been 
+# created previously and given as values in a dictionary. If the file does not exist yet,
+# default values are applied.
+# The user is then asked if there is any change desired in the parameters' values.
 
-def sim_param():
-    
-    sim_param_dict = {}
-    
-    message = '''\n\nThe simulation is going to start soon. Please, enter the 
-    values for some simulation parameters that can be changed. 
-    Press 'enter' to assign them their default values.\n'''
+def parameters_input():
+
+    # Creating a dictionary that contains all the parameters, their type, default values, etc.
+    param_dict = {
+        'n_hh': {'type': int, 'default_val': 100, 'min_val': 1, 'max_val': 10000, 'uom': '(households)'},
+        'toll': {'type': int, 'default_val': 15., 'min_val': 0., 'max_val': 100, 'uom': '(min)'},
+        'devsta': {'type': int, 'default_val': 2, 'min_val': 1, 'max_val': 100, 'uom': '(min)'},
+        'q_max': {'type': int, 'default_val': 85, 'min_val': 1, 'max_val': 100, 'uom': '(%)'},
+        'q_med': {'type': int, 'default_val': 50, 'min_val': 1, 'max_val': 100, 'uom': '(%)'},
+        'q_min': {'type': int, 'default_val': 15, 'min_val': 1, 'max_val': 100, 'uom': '(%)'},
+        'dt_aggr':{'type': int, 'default_val': 60, 'possible_values': [5, 10, 15, 20, 30, 45, 60], 'uom': '(min)'},
+        'n_people_avg': {'type': float, 'default_val': 2.7, 'min_val': 1., 'max_val': 10., 'uom': '(people/household)'},
+        'ftg_avg': {'type': float, 'default_val': 100., 'min_val': 10., 'max_val': 1000., 'uom': '(m2)'},
+        'power_max': {'type': float, 'default_val': 3000., 'min_val': 1000., 'max_val': 10000., 'uom': '(W)'},
+        'location': {'type': str, 'default_val': 'north', 'possible_values': ['north', 'south', 'centre'], 'uom': '(/)'},
+        'en_class': {'type': str, 'default_val': 'A+', 'possible_values': ['A+++', 'A++', 'A+', 'A', 'B', 'C', 'D'], 'uom': '(/)'},
+        'time_scale': {'type': str, 'default_val': 'h', 'possible_values': ['min', 'h'], 'uom': '(/)'},
+        'power_scale': {'type': str, 'default_val': 'kW', 'possible_values': ['W', 'kW', 'MW'], 'uom': '(/)'},
+        'energy_scale': {'type': str, 'default_val': 'MWh', 'possible_values': ['Wh', 'kWh', 'MWh'], 'uom': '(/)'},
+        }
+
+    # Creating a list that contains all the parameters names (usefull for the inputs from keyboard)
+    param_list = list(param_dict.keys())
+
+    # Creating a list of possible commands that will stop the execution of the code
+    stop_commands = ['', 'stop', 'done', 'no', 'none']
+
+    # The current values for the parameters a re read from the file parameters.csv. If it does not exist yet
+    # default values are assigned to the parameters
+    params = datareader.read_param('parameters', ';', 'Input')
+
+    if not bool(params):
+        for param in param_dict: params[param] = param_dict[param]['default_val']
+
+    # Printing the current values for the parameters
+    message = 'The parameters for the simulation are currently set as follows\n'
     print(message)
 
+    for param in params: print('{}: {}'.format(param, params[param]))
 
-    message = '\nPlease, enter the total number of households to be considered - currently: %d\n' %(n_hh)
-    n_hh_inp = input(message) #number of households (-)
-    
-    while True: 
-        if n_hh_inp == '': n_hh_inp = n_hh; break
-        try: n_hh_inp = int(n_hh_inp)
-        except: n_hh_inp = input('Please, enter an integer: ');continue
-        
-        if n_hh_inp >= 1 and n_hh_inp <= 1000: break
-        else: n_hh_inp = input('Please, enter an integer between 1 and 1000: ');continue
-        
-    sim_param_dict['n_hh'] = ('-' , n_hh_inp)
+    # Starting the procedure for updating the values of the parameters
+    while True:
 
-      
-    message = '\nPlease, insert the average number of people per household - currently: %.1f\n' %(n_people_avg)
-    n_people_avg_inp = input(message) #average number of members for each household (-)
-    
-    while True: 
-        if n_people_avg_inp == '': n_people_avg_inp = n_people_avg; break
-        try: n_people_avg_inp = float(n_people_avg_inp)
-        except: n_people_avg_inp = input('Please, enter a number: ');continue
-        
-        if n_people_avg_inp >= 1.0 and n_people_avg_inp <= 10.0: break
-        else: n_people_avg_inp = input('Please, enter a number between 1 and 10: ');continue
-     
-    sim_param_dict['n_people_avg'] = ('-' , n_people_avg_inp)
-    
-    
-    message = '\nPlease, insert the average square footage of the households (m2) - currently: %.1f m2\n' %(ftg_avg)
-    ftg_avg_inp = input(message) #average  square footage of each household (m2)
-    
-    while True: 
-        if ftg_avg_inp == '': ftg_avg_inp = ftg_avg; break
-        try: ftg_avg_inp = float(ftg_avg_inp)
-        except: ftg_avg_inp = input('Please, enter a number: ');continue
-        
-        if ftg_avg_inp >= 1.0 and ftg_avg_inp <= 1000.0: break
-        else: ftg_avg_inp = input('Please, enter a number between 1 and 1000: ');continue
-     
-    sim_param_dict['ftg_avg'] = ('m2' , ftg_avg_inp)
-    
-    
-    message = '\nPlease, select the geographical location between \'north\', \'centre\', \'south\' - currently: %s \n' %(location)
-    location_inp = input(message).lower().strip().strip("'").strip('"') #geographical location: 'north' | 'centre' | 'south'
-    
-    while True: 
-        if location_inp == 'center': location_inp = 'centre'
-        if location_inp == '': location_inp = location; break
+        # Asking for a command-line input in order to change a parameter's value
+        param_change = input('\nWould you like to change any parameter(write the whole expression)?: ')
+
+        # Exiting the loop if a "stop-command" is given
+        if param_change.lower().strip() in stop_commands: break
+
+        # Finding the equality sign in the expression entered by the user, in order to
+        # divide the parameter's name from the value
+
+        index = param_change.find('=')
+        param_name = param_change[:index].lower().strip("',.=\" ")
+        param_val = param_change[index + 1:].lower().strip("',.=\" ")
+
+        # Assessing if the parameter's name entered by the user is in the parameter's list;
+        # otherwise the Leven_dist_comparison method is used to suggest the closest match 
+        count = 0
+        count_max = 3
+        while param_name not in param_list and count < count_max:
+            options = Leven_dist_comparison(param_name, param_list)
             
-        if location_inp == 'north' or location_inp == 'centre' or location_inp == 'south': break
-        else: location_inp = input('Please, choose between \'north\', \'centre\', \'south\': ').lower().strip().strip("'").strip('"');continue
-    
-    sim_param_dict['location'] = ('/' , location_inp)
-    
-    
-    message = '\nPlease, insert the maximum available power for each household (W) - currently: %.0f W\n' %(power_max)
-    power_max_inp = input(message) #maximum power available from the grid (contractual power) (W)
-    
-    while True: 
-        if power_max_inp == '': power_max_inp = power_max;break
-        try: power_max_inp = float(power_max_inp)
-        except: power_max_inp = input('Please, enter a number: ');continue
+            if len(options) == 1: message = 'Do you mean {}? (rewrite the name): '.format(options[0])
+            else : message = 'Do you mean {}? (rewrite the name): '.format(('? Or ').join(options))
+            
+            param_name = input(message)
+
+            if param_name.lower().strip() in stop_commands: break
+            count += 1
+
+        if param_name.lower().strip() in stop_commands: break
+        elif param_name not in param_list: continue
+
+
+        # After identifying the parameter that is going to be changed, the value entered by the user
+        # is checked to be consistent with the possible values the parameter can assume
+        if param_dict[param_name]['type'] == int:
+
+            while True: 
+                if param_val.lower().strip() in stop_commands: param_val = param_dict[param_name]['default_val']; break
+
+                try: param_val = int(param_val)
+                except: param_val = input('Please, enter an integer value for {}: '.format(param_name)); continue
+                
+                if 'possible_values' not in param_dict[param_name]:
+                    
+                    low_lim = param_dict[param_name]['min_val']
+                    up_lim = param_dict[param_name]['max_val']
+
+                    if param_val >= low_lim and param_val <= up_lim: break
+                    else: param_val = input('Please, enter an integer between {} and {}: '.format(low_lim, up_lim)); continue
+
         
-        if power_max_inp >= 1e3 and power_max_inp <= 1e4: break
-        else: power_max_inp = input('Please, enter a number between 1e3 and 1e4: ');continue
-    
-    sim_param_dict['power_max'] = ('W' , power_max_inp)
-    
-    
-    message = '\nPlease, select the energetic class of the appliances from \'A+++\' to \'D\' (or from 0 to 6)- currently: %s \n' %(en_class)
-    en_class_inp = input(message).upper().strip().strip("'").strip('"') #energetic class of the appiances: 'A+++' | 'A++' | 'A+' | 'A' | 'B' | 'C' | 'D'
-    
-    en_class_dict = {'A+++':0,'A++':1,'A+':2,'A':3,'B':4,'C':5,'D':6}
-    
-    while True: 
-        if en_class_inp == '': en_class_inp = en_class; break
-        if en_class_inp in en_class_dict.keys(): break
-        if int(en_class_inp) in en_class_dict.values(): en_class_inp = list(en_class_dict.keys())[list(en_class_dict.values()).index(int(en_class_inp))];break
-        else: en_class_inp = input('Please, enter an energetic class from \'A+++\' to \'D\' (or from 0 to 6)').upper().strip().strip("'").strip('"');continue
-    
-    sim_param_dict['en_class'] = ('/' , en_class_inp)
-    
-    
-    message = '''\n\nFor appliances which don\'t have a duty-cycle and do not belong to
-    "continuous" type, the time in which they are siwtched on during 24h (T_on)
-    is modified exctracting a random duration from a normal distribution
-    (centred in T_on, with standard deviation equal to devsta), in a range
-    defined by toll).\n'''
-    print(message)
-    
-    message = '\nPlease, insert the value for the tollerance on the duration range (%%) - currently: %d %%\n' %(toll)
-    toll_inp = input(message) #tollerance on total time in which the appliance is on (%); default value: 15%
-    
-    while True: 
-        if toll_inp == '': toll_inp = toll;break
-        try: toll_inp = int(toll_inp)
-        except: toll_inp = input('Please, enter an integer: ');continue
+                else:
+                    
+                    possible_values = param_dict[param_name]['possible_values']
+                
+                    if param_val in possible_values: break
+                    else: param_val = input('Please, enter an integer in {}: '.format(possible_values)); continue
+       
+        elif param_dict[param_name]['type'] == float:
+
+            low_lim = param_dict[param_name]['min_val']
+            up_lim = param_dict[param_name]['max_val']
         
-        if toll_inp >= 0 and toll_inp <= 100: break
-        else: toll_inp = input('Please, enter an integer between 0 and 100: ');continue
-    
-    sim_param_dict['toll'] = ('%' , toll_inp)
-    
-    
-    message = '\nPlease, insert the value for the standard deviation on the durations distribution (min) - currently: %.1f min\n' %(devsta)
-    devsta_inp = input(message) #standard deviation on total time in which the appliance is on (min); default value: 2 min
-    
-    while True: 
-        if devsta_inp == '': devsta_inp = devsta;break
-        try: devsta_inp = float(devsta_inp)
-        except: devsta_inp = input('Please, enter a number: ');continue
+            while True: 
+                if param_val.lower().strip() in stop_commands: param_val = param_dict[param_name]['default_val']; break
+
+                try: param_val = float(param_val)
+                except: param_val = input('Please, enter a number: '); continue
+                
+                if param_val >= low_lim and param_val <= up_lim: break
+                else: param_val = input('Please, enter a number between {} and {}: '.format(low_lim, up_lim)); continue
+   
+        elif param_dict[param_name]['type'] == str:
+
+            possible_values = param_dict[param_name]['possible_values']
+            
+            possible_values_low = []
+            for value in possible_values: possible_values_low.append(value.lower())
+            
+            while True: 
+                
+                if param_val.lower().strip() in stop_commands: param_val = param_dict[param_name]['default_val']; break
         
-        if devsta_inp >= 1.0 and devsta_inp <= 10.0: break
-        else: devsta_inp = input('Please, enter a number between 1 and 10: ');continue
-        
-    sim_param_dict['devsta'] = ('min' , devsta_inp)
-    
-     
-    filename = 'sim_param.csv'
+                if param_val.lower().strip() in possible_values_low: param_val = possible_values[possible_values_low.index(param_val.lower().strip())]; break
+                else: param_val = input('Please, choose between {}: '.format(possible_values)); continue
+            
+        # Updating the parameter's value
+        params[param_name] = param_val
+
+    # Storing the parameters (updated) in a .csv file
+    filename = 'parameters.csv'
     fpath = basepath / dirname 
     with open(fpath / filename , mode='w', newline='') as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
 
-        csv_writer.writerow(['Parameter name', 'Unit of measure' , 'Value'])
-    
-        for key in sim_param_dict:
-            csv_writer.writerow([key , sim_param_dict[key][0] , sim_param_dict[key][1]])
-    
+        csv_writer.writerow(['Name', 'Value', 'Unit of measure'])
 
-##############################################################################
+        for param in params:
+            csv_writer.writerow([param , params[param], param_dict[param]['uom']])
 
-########## Results postprocessing parameters that can be changed
-
-def aggr_param():
+    # Returning a dictionary with the updated values for the parameters
+    return(params)
     
-    aggr_param_dict = {}
-
-    message = '''\n\nThe load profile from the electric appliances are evaluated 
-    for each household. Then, the aggregated load profile is going to be evaluated
-    by summing, for each time-interval, the power demand from all the households.
-    Press 'enter' to assign them their default values.\n'''
-    print(message)
-    
-    
-    message = '\nThe load profiles are evaluated with a 1 min timestep. Anyway, the\
-        final results can be aggregated with a different timestep.\n'
-    print(message)
-    
-    message = '\nPlease, select a timestep for the aggregation of the final results (min)\
-        - currently: %d min\n' %(dt_aggr)
-    dt_aggr_inp = input(message) #aggregated data timestep (min)
-    
-    dt_aggr_list = [1,5,10,15,20,30,45,60]
-    
-    while True: 
-        if dt_aggr_inp == '': dt_aggr_inp = dt_aggr; break
-        try: dt_aggr_inp = int(dt_aggr_inp)
-        except: dt_aggr_inp = input('Please, enter an integer: ');continue
-        
-        if dt_aggr_inp in dt_aggr_list: break
-        else: dt_aggr_inp = input('Please, choose a value in [1,5,10,15,20,30,45,60]: ');continue
-    
-    aggr_param_dict['dt_aggr'] = ('min' , dt_aggr_inp)
-    
-    
-    message = '\nThe minimum, medium and maximum power demands are evaluated as quantile.\n'
-    print(message)
-    
-    message = '''\nPlease, insert the quantile to be used for evaluating minimum, medium
-    and maximum power demands in the load profiles - currently: %d - %d - %d %%\n''' %(quantile_curr[0],quantile_curr[1],quantile_curr[2])
-    print(message)
-    
-    quantile = []
-    for ii in range(len(quantile_curr)):
-        
-        if ii == 0: message = 'Minimum: '
-        elif ii == 1: message = 'Medium: '
-        else: message = 'Maximum: '
-        quantile.append(input(message)) #quantile for the evaluation of minimum, medium and maximux power demands for the load profiles
-    
-        while True: 
-            if quantile[ii] == '': quantile[ii] = quantile_curr[ii];break
-            try: quantile[ii] = int(quantile[ii])
-            except: quantile[ii] = input('Please, enter an integer: ');continue
-            
-            
-            if quantile[ii] >= 0 and quantile[ii] <= 100: break
-            else: quantile[ii] = input('Please, enter an integer between 0 and 100: ');continue
-            
-    quantile.sort()
-    
-    quantile_min = quantile[0]
-    quantile_med = quantile[1]
-    quantile_max = quantile[2]
-           
-    aggr_param_dict['quantile_min'] = ('%' , quantile_min)
-    aggr_param_dict['quantile_med'] = ('%' , quantile_med)
-    aggr_param_dict['quantile_max'] = ('%' , quantile_max)
-    
-    filename = 'aggr_param.csv'
-    fpath = basepath / dirname 
-    with open(fpath / filename, mode='w', newline='') as csv_file:
-        csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
-
-        csv_writer.writerow(['Parameter name', 'Unit of measure' , 'Value'])
-    
-        for key in aggr_param_dict:
-            csv_writer.writerow([key , aggr_param_dict[key][0] , aggr_param_dict[key][1]])
-    
-
-##############################################################################
-
-########## Plotting parameters that can be changed
-
-def plot_param():
-    
-    plot_param_dict = {}
-    
-    message = '''\n\nPlease, enter some plotting paramters that can be changed.
-    Press 'enter' to assign them their default values.\n'''
-    print(message)
-    
-    
-    message = '\nThe time-scale can be changed.'
-    print(message)
-    
-    message = 'Please, select the time-scale to be used in the graphs, choose between \'min\' and \'h\' - currently: %s \n' %(time_scale)
-    time_scale_inp = input(message).lower().strip().strip("'").strip('"') #time-scale for plotting: 'min' | 'h' 
-    
-    while True: 
-        if time_scale_inp == '': time_scale_inp = time_scale;break
-            
-        if time_scale_inp == 'min' or time_scale_inp == 'h': break
-        else: time_scale_inp = input('Please, choose between \'min\' and \'h\': ').lower().strip().strip("'").strip('"');continue
-    
-    plot_param_dict['time_scale'] = ('/' , time_scale_inp)
-    
-    
-    message = '\nThe power-scale can be changed.'
-    print(message)
-    
-    message = 'Please, select the power-scale to be used in the graphs, choose between \'W\' and \'kW\' - currently: %s \n' %(power_scale)
-    power_scale_inp = input(message).upper().strip().strip("'").strip('"') #power_scale for plotting: 'W' | 'kW' 
-    
-    while True: 
-        if power_scale_inp == '': power_scale_inp = power_scale; break
-        if power_scale_inp == 'KW': power_scale_inp = 'kW';break
-            
-        if power_scale_inp == 'W' or power_scale_inp == 'kW': break
-        else: power_scale_inp = input('Please, choose between \'W\' and \'kW\': ').upper().strip().strip("'").strip('"');continue
-    
-    plot_param_dict['power_scale'] = ('/' , power_scale_inp)
-    
-    
-    message = '\nThe energy-scale can be changed.'
-    print(message)
-    
-    message = 'Please, select the energy-scale to be used in the graphs, choose between \'Wh\', \'kWh\' and \'MWh\' - currently: %s \n' %(energy_scale)
-    energy_scale_inp = input(message).lower().strip().strip("'").strip('"') #energy_scale for plotting: 'Wh' | 'kWh' | 'MWh' 
-    
-    while True: 
-        if energy_scale_inp == '': energy_scale_inp = energy_scale; break
-        if energy_scale_inp == 'wh': energy_scale_inp = 'Wh';break
-        elif energy_scale_inp == 'kwh': energy_scale_inp = 'kWh';break
-        elif energy_scale_inp == 'mwh': energy_scale_inp = 'MWh';break
-            
-        if energy_scale_inp == 'Wh' or energy_scale_inp == 'kWh' or energy_scale_inp == 'MWh': break
-        else: energy_scale_inp = input('Please, choose between choose between \'Wh\', \'kWh\' and \'MWh\': ').upper().strip().strip("'").strip('"');continue
-        
-    plot_param_dict['energy_scale'] = ('/' , energy_scale_inp)
-    
-    filename = 'plot_param.csv'
-    fpath = basepath / dirname 
-    with open(fpath / filename , mode='w', newline='') as csv_file:
-        csv_writer = csv.writer(csv_file, delimiter=';', quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
-
-        csv_writer.writerow(['Parameter name', 'Unit of measure' , 'Value'])
-    
-        for key in plot_param_dict:
-            csv_writer.writerow([key , plot_param_dict[key][0] , plot_param_dict[key][1]])

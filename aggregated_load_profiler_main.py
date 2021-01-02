@@ -13,7 +13,7 @@ import csv
 from pathlib import Path
 
 import datareader
-import parameters_input as inp
+import parameters_input_new as inp
 import plot_generator  as plot
 from house_load_profiler import house_load_profiler as hlp
 from load_profile_aggregator import aggregator as agr
@@ -46,78 +46,59 @@ basepath = Path(__file__).parent
 # try: Path.mkdir(basepath / dirname)
 # except Exception: pass 
   
-########## Parameters
 
-# Simulation parameters that can be changed
+## Parameters
 
-n_hh = 100 #number of households (-)
-n_people_avg = 2.7 #average number of members for each household (-)
-ftg_avg = 100  #average footage of each household (m2)
-location = 'north' #geographical location: 'north' | 'centre' | 'south'
-power_max = 3000 #maximum power available from the grid (contractual power) (W)
-en_class = 'A+' #energetic class of the appiances: 'A+++' | 'A++' | 'A+' | 'A' | 'B' | 'C' | 'D'
+# Updating the parameters according to user's input by calling the parameters_input() method
+params = inp.parameters_input()
+
+# Updating the parameters' values
+
+# Number of households considered (-)
+n_hh = params['n_hh']
+
+# Average number of people, for each household (-)
+n_people_avg = params['n_people_avg']
+
+# Average square footage of the households (m2)
+ftg_avg = params['ftg_avg']  
+
+# Geographical location: 'north' | 'centre' | 'south'
+location = params['location']
+
+# Maximum power available from the grid (contractual power) (W)
+power_max = params['power_max']
+
+# Energetic class of the appiances: 'A+++' | 'A++' | 'A+' | 'A' | 'B' | 'C' | 'D'
+en_class = params['en_class']
 
 # For appliances which don't have a duty-cycle and do not belong to "continuous"
 # type, the time in which they are siwtched on during 24h (T_on) is modified
 # exctracting a random duration from a normal distribution (centred in T_on, with
 # standard deviation equal to devsta), in a range defined by toll
-toll = 15 #tollerance on total time in which the appliance is on (%); default value: 15%
-devsta = 2 #standard deviation on total time in which the appliance is on (min); default value: 2 min
 
-# Aggregation parameters that can be changed
+# Tollerance on total time in which the appliance is on (duration) (%)
+toll = params['toll']
 
-dt_aggr = 15 #aggregated data timestep (min) 1 | 5 | 10 | 15 | 10 | 30 | 45 | 60
-quantile_min, quantile_med, quantile_max = 15,50,85 #quantils for the evaluation of minimum, medium and maximux power demands for the load profiles
+# Standard deviation on total time in which the appliance is on (duration) (min)
+devsta = params['devsta']
 
-# Plotting parameters that can be changed
+# Time-step used to aggregated the results (min): 1 | 5 | 10 | 15 | 10 | 30 | 45 | 60
+dt_aggr = params['dt_aggr']
 
-time_scale = 'min' #time-scale for plotting: 'min' | 'h' 
-power_scale = 'W' #power_scale for plotting: 'W' | 'kW'
-energy_scale = 'Wh' #energy_scale for plotting: 'Wh' | 'kWh' | 'MWh' 
+# Quantile for the evaluation of maximum, medium and minimum power demands at each time-step
+q_max = params['q_max']
+q_med = params['q_med']
+q_min = params['q_min']
 
-########### Parameters update 
+# Time-scale for plotting: 'min' | 'h' 
+time_scale = params['time_scale'] 
 
-message = 'The parameters for the simulation are set to:\n'
-print(message)
+# Power_scale for plotting: 'W' | 'kW' | 'MW'
+power_scale = params['power_scale'] 
 
-message = '\nSimulation parameters'
-print(message)
-
-varname, varval = datareader.read_param('sim_param.csv',';','Parameters')
-for name, val in zip(varname, varval):
-    vars()[name] = val
-    print(str(name) +': ' + str(val))
-    
-message = '\nAggregation parameters'
-print(message)
-    
-varname, varval = datareader.read_param('aggr_param.csv',';','Parameters')
-for name, val in zip(varname, varval):
-    vars()[name] = val
-    print(str(name) +': ' + str(val))
-    
-message = '\nPlotting parameters'
-print(message)
-    
-varname, varval = datareader.read_param('plot_param.csv',';','Parameters')
-for name, val in zip(varname, varval):
-    vars()[name] = val
-    print(str(name) +': ' + str(val))
-
-
-
-message = '\nThank you, the simulation is now starting.\n'
-print(message)
-
-
-params = {
-    'ftg_avg': ftg_avg,
-    'toll': toll,
-    'devsta': devsta,
-    'power_max': power_max,
-    'en_class': en_class,
-    }
-
+# Energy_scale for plotting: 'Wh' | 'kWh' | 'MWh' 
+energy_scale = params['energy_scale']
 
 
 ## Time 
@@ -221,9 +202,10 @@ days_distr = {'winter': {'week-day': 64, 'weekend-day': 26},
 # the maximum power (demanded by less than 15% of the households), the median
 # power (demanded by less than 50% of the households) and the minimum (demanded 7
 # by less than 85% of the households).
-nmin = int(np.round(n_hh*quantile_min/100)) 
-nmed = int(np.round(n_hh*quantile_med/100))
-nmax = int(np.round(n_hh*quantile_max/100))
+nmax = int(np.round(n_hh*q_max/100))
+nmed = int(np.round(n_hh*q_med/100))
+nmin = int(np.round(n_hh*q_min/100)) 
+
 
 # A random sample of n_samp houses is also extracted in order to plot, for each 
 # of them, the load profile during one day for each season, for each day-type.
