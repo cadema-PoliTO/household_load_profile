@@ -24,7 +24,7 @@ from levenshtein_distance import Leven_dist_comparison
 basepath = Path(__file__).parent
 
 # A /Parameters folder is created in order to store the parameters as .csv files
-dirname = 'Input'
+dirname = 'Parameters'
 
 try: Path.mkdir(basepath / dirname)
 except Exception: pass 

@@ -13,7 +13,7 @@ import csv
 from pathlib import Path
 
 import datareader
-import parameters_input_new as inp
+import parameters_input as inp
 import plot_generator  as plot
 from house_load_profiler import house_load_profiler as hlp
 from load_profile_aggregator import aggregator as agr

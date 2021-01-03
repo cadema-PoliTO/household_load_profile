@@ -51,7 +51,7 @@ Concerning the energy consumptions, they are stored in a matrix in order to be a
 
 ### Content of the repository
 
-#### \Input folder
+#### Input/
 
 This repository contains all the files that need to be loaded in the workspace of the various method as _.csv_ files. Their name is properly formatted so that each methods knows which file to look at when certain data is needed. Particularly, the file needed for the methods are:
 
@@ -67,35 +67,35 @@ This repository contains all the files that need to be loaded in the workspace o
 
 * Duty cycle files. They contain a time vector (in minutes, from $0 \textrm{ min}$ to the value of the duration) with a resolution of $1 \textrm{ min}$ in the first columns and the power demand in Watt from the appliance for each timestep in the second column. Their name is formatted as follows: `'dutycycle' + '_' + app_nickname + '.csv'`
 
-#### \Parameters folder
+#### Parameters/
 
 This folder contains three .csv files where the parameters that are to be specified by the user for the simulation are stored.
 
-* *'sim_param.csv'*: it contains the user-defined values for some parameters that control the simulation.
-* *'aggr_param.csv'*: it contains the user-defined values for some parameters that control the aggregation of the results.
-* *'plot_param.csv'*: it contains the user-defined values for some parameters that control the post-process of the results (figures).
+* *'parameters.csv'*: it contains the user-defined values for some parameters that control the simulation.
 
 #### Python files
 
-* `aggregate_load_profiler_main.py`: this is the main file, where some simulation parameters can be changed. The load aggregated load profiles in the different seasons, and the energy consumptions over one year are computed and figures are generated. This is the only file that needs to be used directly by the user. The results are saved in \Output, as follows:
-  * *'aggr_lp_season_day.csv'*: they contain the aggregated load profile and the quantile for each seasons, for each type of day.
-  * *'energy_season_.csv'*: they contain the energy consumed from each appliance, for each household, for each season.
+* `aggregate_load_profiler_main.py`: this is the main. The load aggregated load profiles in the different seasons, and the energy consumptions over one year are computed and figures are generated. This is the only file that needs to be used directly by the user. The results are saved in Output/ (both files, in Files/, and figures in /Figures).
 
-* `plot_generator.py`: this file contains all the instruction for the creation of the figures showing the results. It is called by the main file but it can also be used directly by the user if the files containing the results are already saved in \Output.
+* `plot_generator.py`: this module contains all the methods for the creation of the figures showing the results.
 
-* `parameters_input.py`: this file contains the methods that are used in the main file for updating the paramters value to the user's keyboard input. This file is not directly used by the user. The parameters are saved in \Parameters.
+* `parameters_input.py`: this module contains the method that is used in main for updating the paramters value to the user's keyboard input. This module is not directly used by the user. The parameters are saved in Parameters/.
 
-* `house_load_profiler.py`: this file contains the method that computes the load profile for a household. This file can be used directly bu the user if the load profile for a single household is to be computed.
+* `house_load_profiler.py`: this module contains the method that computes the load profile for a household. This module can be used directly bu the user if the load profile for a single household is to be computed.
 
-* `load_profiler.py`: this file contains the method that computes the load profile for a single appliance. This file can be used directly bu the user if the load profile for a single appliance is to be computed.
+* `load_profiler.py`: this module contains the method that computes the load profile for a single appliance. This module can be used directly by the user if the load profile for a single appliance is to be computed.
 
-* `cumulative_frequency.py`: this file contains a method to compute the cumulative frequency, starting from the frequency density. This file is not directely used by the user.
+* `cumulative_frequency.py`: this module contains a method to compute the cumulative frequency, starting from the frequency density. This module is not directely used by the user.
 
-* `profile_interpolation.py`: this file contains the method that interpolates a given time-profile in order to change the time resolution. This file is not directely used by the user.
+* `profile_interpolation.py`: this module contains the method that interpolates a given time-profile in order to change the time resolution. This module is not directely used by the user.
 
-* `datareader.py`: this file contains different methods that properly read the various input files. This file is not directely used by the user.
+* `tictoc.py`: this module contains two methods that are a Python adaptation of Matalab's tic-toc functions.
 
-#### \ Output folder
+* `levenshtein_distance.py`: this module contains a method that uses Levenshtein distance between two string to suggest the closest match to a word (user's input) and a list of words.
+
+* `datareader.py`: this module contains different methods that properly read the various input files. This module is not directely used by the user.
+
+#### Output/
 
 This folder contains all the .csv files where the results from the various simulations are stored. The filename is formatted in order to give all the information needed about the location, season, day type of the simulation ,as well as the number of households considered and the energetic class of the appliances.
-The folder also contains the subfolder \Figures, where the graphs are saved.
+The folder also contains the subfolders Files/ and Figures/.
