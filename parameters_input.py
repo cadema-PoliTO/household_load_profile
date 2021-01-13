@@ -97,7 +97,7 @@ def parameters_input():
 
     # The current values for the parameters a re read from the file parameters.csv. If it does not exist yet
     # default values are assigned to the parameters
-    params = datareader.read_param('parameters', ';', 'Input')
+    params = datareader.read_param('parameters', ';', dirname)
 
     if not bool(params):
         for param in param_dict: params[param] = param_dict[param]['default_val']
@@ -112,7 +112,7 @@ def parameters_input():
     while True:
 
         # Asking for a command-line input in order to change a parameter's value
-        param_change = input('\nWould you like to change any parameter(write the whole expression)?: ')
+        param_change = input('\nWould you like to change any parameter? (ex: n_hh = 100): ')
 
         # Exiting the loop if a "stop-command" is given
         if param_change.lower().strip() in stop_commands: break

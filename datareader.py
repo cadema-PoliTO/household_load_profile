@@ -26,7 +26,7 @@ basepath = Path(__file__).parent
 ##############################################################################
 # if True:
 
-#     dirname = 'Input'
+#     dirname = 'Parameters'
 #     filename = 'parameters'
 #     delimit = ';'
 
