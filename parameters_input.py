@@ -7,6 +7,8 @@ Created on Tue Nov 10 16:09:48 2020
 
 from pathlib import Path
 import csv
+from tabulate import tabulate
+
 import datareader
 from levenshtein_distance import Leven_dist_comparison
 
@@ -72,7 +74,7 @@ def parameters_input():
 
     # Creating a dictionary that contains all the parameters, their type, default values, etc.
     param_dict = {
-        'n_hh': {'type': int, 'default_val': 100, 'min_val': 1, 'max_val': 10000, 'uom': '(households)'},
+        'n_hh': {'type': int, 'default_val': 100, 'min_val': 1, 'max_val': 10000, 'uom': '(units)'},
         'toll': {'type': int, 'default_val': 15., 'min_val': 0., 'max_val': 100, 'uom': '(min)'},
         'devsta': {'type': int, 'default_val': 2, 'min_val': 1, 'max_val': 100, 'uom': '(min)'},
         'q_max': {'type': int, 'default_val': 85, 'min_val': 1, 'max_val': 100, 'uom': '(%)'},
@@ -89,13 +91,30 @@ def parameters_input():
         'energy_scale': {'type': str, 'default_val': 'MWh', 'possible_values': ['Wh', 'kWh', 'MWh'], 'uom': '(/)'},
         }
 
+    # Provididng parameters' description
+    param_dict['n_hh']['description'] = 'number of households'
+    param_dict['toll']['description'] = 'tollerance on appliances\' duration'
+    param_dict['devsta']['description'] = 'standard deviation on appliances\' duration'
+    param_dict['q_max']['description'] = 'quantile for the maximum instantaneous load profile'
+    param_dict['q_med']['description'] = 'quantile for the medium instantaneous load profile'
+    param_dict['q_min']['description'] = 'quantile for the minimum instantaneous load profile'
+    param_dict['dt_aggr']['description'] = 'time-step for the aggregation'
+    param_dict['n_people_avg']['description'] = 'average number of people per household'
+    param_dict['ftg_avg']['description'] = 'average footage of the households'
+    param_dict['power_max']['description'] = 'maximum (contractual) power'
+    param_dict['location']['description'] = 'location (north - centre - south)'
+    param_dict['en_class']['description'] = 'energy class of the appliances (A+++ - D)'
+    param_dict['time_scale']['description'] = 'time-scale for plotting'
+    param_dict['power_scale']['description'] = 'power-scale for plotting'
+    param_dict['energy_scale']['description'] = 'energy-scale for plotting'
+
     # Creating a list that contains all the parameters names (usefull for the inputs from keyboard)
     param_list = list(param_dict.keys())
 
     # Creating a list of possible commands that will stop the execution of the code
     stop_commands = ['', 'stop', 'done', 'no', 'none']
 
-    # The current values for the parameters a re read from the file parameters.csv. If it does not exist yet
+    # The current values for the parameters a read from the file parameters.csv. If it does not exist yet
     # default values are assigned to the parameters
     params = datareader.read_param('parameters', ';', dirname)
 
@@ -103,16 +122,25 @@ def parameters_input():
         for param in param_dict: params[param] = param_dict[param]['default_val']
 
     # Printing the current values for the parameters
-    message = 'The parameters for the simulation are currently set as follows\n'
+    message = '\nThe parameters for the simulation are currently set as follows\n'
     print(message)
 
-    for param in params: print('{}: {}'.format(param, params[param]))
+    tab = []
+    for param in params:
+        row = [param, params[param], param_dict[param]['uom'].strip('() '), param_dict[param]['description']]
+        tab.append(row)
+    
+    print(tabulate(tab, headers=['Parameter', 'Value', 'Unit of measure', 'Description']))
+
+    # Starting the input of new values
+    message = '\nWould you like to change any parameter?\nPress enter to avoid or stop at any time'
+    print(message)
 
     # Starting the procedure for updating the values of the parameters
     while True:
 
         # Asking for a command-line input in order to change a parameter's value
-        param_change = input('\nWould you like to change any parameter? (ex: n_hh = 100): ')
+        param_change = input('\nWrite the whole expression (ex. n_hh = 100): ')
 
         # Exiting the loop if a "stop-command" is given
         if param_change.lower().strip() in stop_commands: break
@@ -134,7 +162,7 @@ def parameters_input():
             if len(options) == 1: message = 'Do you mean {}? (rewrite the name): '.format(options[0])
             else : message = 'Do you mean {}? (rewrite the name): '.format(('? Or ').join(options))
             
-            param_name = input(message)
+            param_name = input(message).lower().strip("',.=\" ")
 
             if param_name.lower().strip() in stop_commands: break
             count += 1
@@ -213,4 +241,8 @@ def parameters_input():
 
     # Returning a dictionary with the updated values for the parameters
     return(params)
+
+
+
+# peppe = parameters_input()
     

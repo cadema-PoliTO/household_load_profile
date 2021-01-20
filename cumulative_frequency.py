@@ -38,7 +38,7 @@ def cum_freq(time,freqdens):
         cum = res[ii]
             
     # Normalization and return
-    return(res/cum)  
+    return(res/cum)
 
     
 # ##### Function testing: uncomment the following line to test the function

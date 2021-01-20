@@ -89,7 +89,7 @@ def read_param(filename,delimit,dirname):
     except:
         print('Unable to open this file')
     
-    print('Im returning params: {}'.format(params))
+    # print('Im returning params: {}'.format(params))
     return(params)
 
  

@@ -146,14 +146,14 @@ def house_load_profiler(apps_availability, day, season, appliances_data, **param
 
 # params = {
 #     'power_max': 3000,
-#     'en_class': 'A',
+#     'en_class': 'A+',
 #     'toll': 15,
 #     'devsta': 2,
 #     'ftg_avg': 100
 #     }
-        
+ 
 # tic()
-# house_load_profile,energy = house_load_profiler(apps_availability, day, season, appliances_data, params)
+# house_load_profile,energy = house_load_profiler(apps_availability, day, season, appliances_data, **params)
 # print(toc())
 # plt.bar(time_sim,house_load_profile,width=dt,align='edge')
 

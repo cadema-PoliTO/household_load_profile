@@ -103,7 +103,7 @@ def load_profiler(app, day, season, appliances_data, **params):
     # kk is the coefficient accounting for the user's behaviour in different season, for each appliance(-)
     kk = coeff_matrix[app_ID, seasons_dict[season]]
 
-    # k_ftg is a coefficient that adapts the consumption from ac and lux to the actual footage of the household
+    # k_ftg is a coefficient that adapts the consumption from lux to the actual footage of the household
     k_ftg = ftg_avg/100 #(m2/m2)
 
     ## Nominal power consumption     
@@ -114,7 +114,7 @@ def load_profiler(app, day, season, appliances_data, **params):
     # The second one is given in minutes and it is divided by 60 to get hours.
     
     # An if statement is used in order to avoid division by 0 in some cases
-    if T_on == 0:
+    if T_on == -1:
         power = 0
     else:
         power = (energy*1000/365)/(T_on/60) #(W)
@@ -157,7 +157,7 @@ def load_profiler(app, day, season, appliances_data, **params):
     
     if app_type == 'continuous':
         
-        fname_type = 'loadprof'
+        fname_type = 'avg_loadprof'
         filename = '{}_{}_{}_{}.csv'.format(fname_type, fname_nickname, fname_day, fname_season)
         
         # Reading the time and power vectors for the load profile
@@ -175,8 +175,17 @@ def load_profiler(app, day, season, appliances_data, **params):
         if (time_lp[-1] - time_lp[0])/(np.size(time_lp) - 1) != dt: 
             load_profile = interp_profile(time_lp, power_lp, time_sim)
 
-        # Adjusting the load profile (value of the power demanded) to the users' seasonal behavior and household's footage      
-        load_profile = load_profile*kk*k_ftg 
+        # Lighting: the load profile is taken as it is, since no information about the different 
+        # yearly energy consumption are available. The value is just adjusted to the users' seasonal behavior 
+        # and household's footage      
+        if app_nickname == 'lux':
+            load_profile = load_profile*kk*k_ftg 
+
+        # Other types of continuous appliances: the load profile is adjusted to the yearly energy consumption
+        else:
+            load_profile = load_profile/(np.trapz(load_profile, time_sim)/time_sim[-1])*power*kk
+
+
         return(load_profile)
    
      
@@ -206,6 +215,11 @@ def load_profiler(app, day, season, appliances_data, **params):
                 kind = 'linear', bounds_error = False, fill_value = 'extrapolate')
             time_dc = np.arange(time_dc[0], time_dc[-1] + dt, dt)
             duty_cycle = f(time_dc)
+
+        # Adjusting the duty cycle to the actual nominal power 
+        # and the users' habits (coefficient kk, varying according to the season)
+        duty_cycle = duty_cycle/(np.trapz(duty_cycle, time_dc)/time_dc[-1])*power*kk
+    
       
     # Building a uniform duty-cycle for those appliances which use a constant power,
     # according to the time-period in a day in which they are used (T_on)  
@@ -225,6 +239,9 @@ def load_profiler(app, day, season, appliances_data, **params):
             while (T_on > lim_up or T_on < lim_low):
                 T_on = int(np.random.normal(d, devsta))
 
+        # Adjusting T_on to the seasonal coefficient for the user's behaviour
+        T_on = T_on*kk
+
         # Creating the time and power vectors for the (uniform) duty-cycle      
         time_dc = np.linspace(0, T_on, int(T_on/dt + 1))
         duty_cycle = np.ones(np.shape(time_dc))
@@ -233,15 +250,14 @@ def load_profiler(app, day, season, appliances_data, **params):
         # meaning that the first value for the power is 0
         duty_cycle[0] = 0
      
-    # Creating a new duty cycle, that takes into account the actual nominal power 
-    # and the users' habits (coefficient kk, varying according to the season)
-    duty_cycle = duty_cycle/np.mean(duty_cycle)*power*kk
+        # Adjusting the duty cycle to the actual nominal power 
+        duty_cycle = duty_cycle/(np.trapz(duty_cycle, time_dc)/time_dc[-1])*power
     
 
-    # Loading the frequency distribution for the usage of the appliance during
-    # the day. It is managed in order to get a cumulative frequency
-    
-    fname_type = 'freqdens'
+    # Loading the average daily load profile during one day
+    # It is used as a frequency distribution for the appliance's use
+    # and it is managed in order to get a cumulative frequency
+    fname_type = 'avg_loadprof'
     filename = '{}_{}_{}_{}.csv'.format(fname_type, fname_nickname, fname_day, fname_season)
 
     # Reading the time and power vectors for the frequency density
@@ -295,7 +311,7 @@ def load_profiler(app, day, season, appliances_data, **params):
     return (load_profile)
 
 
-# ##### Uncomment the following lines to test the function (comment def and return)
+# ## Uncomment the following lines to test the function (comment def and return)
 # # app = 'vacuum_cleaner'
 # # app = 'air_conditioner'
 # # app = 'electric_oven'
@@ -303,7 +319,7 @@ def load_profiler(app, day, season, appliances_data, **params):
 # # app = 'fridge'
 # # app = 'freezer'
 # # app = 'washing_machine'
-# app = 'dish_washer'
+# # app = 'dish_washer'
 # # app = 'tumble_drier'
 # # app = 'electric_boiler'
 # # app = 'hifi_stereo'
@@ -315,7 +331,7 @@ def load_profiler(app, day, season, appliances_data, **params):
 # # app = 'lighting'
 
 # day = 'we'
-# season = 's'
+# season = 'ap'
 
 # apps, apps_ID, apps_attr = datareader.read_appliances('eltdome_report.csv',';','Input')
 # ec_yearly_energy, ec_levels_dict = datareader.read_enclasses('classenerg_report.csv',';','Input')
@@ -333,7 +349,7 @@ def load_profiler(app, day, season, appliances_data, **params):
 #     }
 
 # params = {
-#     'en_class': 'A+++',
+#     'en_class': 'D',
 #     'toll': 15,
 #     'devsta': 2,
 #     'ftg_avg': 100,
@@ -347,4 +363,9 @@ def load_profiler(app, day, season, appliances_data, **params):
 # load_profile=load_profiler(app,day,season,appliances_data, **params)
 # # plt.bar(time_lp,load_profile,width=time_lp[-1]/np.size(time_lp))
 # plt.plot(time_lp,load_profile)
+
+
+# print('Daily consumption ({}): {} Wh/day'.format(app, np.trapz(load_profile, time_lp)/60))
+# print('Yearly consumption ({}): {} kWh/year'.format(app, np.trapz(load_profile, time_lp)/60*365/1000))
+
 # plt.show()
